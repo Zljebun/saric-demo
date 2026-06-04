@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="bs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kancelarija Sarić — Sistem za vođenje predmeta (demo)</title>
+<style>
+  :root{
+    --brand:#0e4f5c; --brand2:#15748a; --gold:#c79a3b; --action:#157f7f;
+    --bg:#f2f6f7; --card:#fff; --line:#e1e8ea; --muted:#65737a;
+    --ok:#1f9d55; --warn:#d9822b; --late:#cc2f2f;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:#16242a}
+  /* Header / brand */
+  header{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;padding:11px 20px;display:flex;align-items:center;gap:13px}
+  .monogram{width:38px;height:38px;border-radius:50%;border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;letter-spacing:.5px}
+  .brand .name{font-weight:700;font-size:16px;line-height:1}
+  .brand .tag{font-size:11.5px;color:var(--gold);letter-spacing:.4px;margin-top:3px}
+  header .spacer{flex:1}
+  header .badge{background:rgba(255,255,255,.14);padding:4px 10px;border-radius:20px;font-size:11.5px}
+  header .user{display:flex;align-items:center;gap:8px;font-size:13px}
+  .avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff}
+  /* Toolbar with tabs */
+  .toolbar{display:flex;align-items:center;gap:6px;padding:0 20px;border-bottom:1px solid var(--line);background:#fff}
+  .tab{padding:14px 14px 12px;font-size:14px;font-weight:600;color:var(--muted);border-bottom:3px solid transparent;cursor:pointer}
+  .tab.active{color:var(--brand);border-bottom-color:var(--gold)}
+  .demo-flag{margin-left:12px;background:#fff4e5;color:#9a5b13;border:1px solid #f0d2a8;padding:4px 10px;border-radius:6px;font-size:12px;align-self:center}
+  /* Kanban */
+  .board{display:flex;gap:14px;padding:18px 20px;overflow-x:auto;align-items:flex-start}
+  .col{background:#e9eff0;border:1px solid var(--line);border-radius:10px;min-width:248px;max-width:248px;display:flex;flex-direction:column}
+  .col h2{font-size:12px;text-transform:uppercase;letter-spacing:.3px;color:var(--brand);margin:0;padding:12px 12px 8px}
+  .col .count{color:var(--muted);font-weight:500}
+  .col .cards{padding:0 10px 12px;display:flex;flex-direction:column;gap:9px;min-height:30px}
+  .pcard{background:var(--card);border:1px solid var(--line);border-radius:9px;padding:11px;cursor:pointer;box-shadow:0 1px 2px rgba(20,40,50,.05);transition:.12s}
+  .pcard:hover{box-shadow:0 4px 12px rgba(20,50,60,.13);transform:translateY(-1px);border-color:#c5d3d6}
+  .pcard .nm{font-weight:650;font-size:14px}
+  .pcard .visa{font-size:12px;color:var(--muted);margin-top:1px}
+  .pcard .meta{display:flex;align-items:center;gap:6px;margin-top:9px;font-size:11.5px}
+  .pill{padding:2px 7px;border-radius:20px;font-size:11px;font-weight:600}
+  .pill.days{background:#e6f2f3;color:#15677a}
+  .pill.late{background:#fdecec;color:var(--late)}
+  .pill.done{background:#e7f6ee;color:var(--ok)}
+  .pcard .who{margin-left:auto}
+  /* Report */
+  .report{padding:20px}
+  .stat-row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+  .stat{background:#fff;border:1px solid var(--line);border-radius:11px;padding:15px 18px;min-width:170px;flex:1}
+  .stat .big{font-size:30px;font-weight:700;color:var(--brand)}
+  .stat .lab{font-size:12.5px;color:var(--muted);margin-top:3px}
+  .panel{background:#fff;border:1px solid var(--line);border-radius:11px;padding:16px 18px;margin-bottom:16px}
+  .panel h3{margin:0 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:.3px;color:var(--brand)}
+  .bar{display:flex;align-items:center;gap:10px;margin:7px 0;font-size:13px}
+  .bar .blab{width:210px;color:#2a3a40}
+  .bar .track{flex:1;background:#eef2f3;border-radius:6px;height:18px;overflow:hidden}
+  .bar .fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--brand2),var(--brand))}
+  .bar .fill.max{background:linear-gradient(90deg,#e0913a,var(--late))}
+  .bar .val{width:64px;text-align:right;color:var(--muted)}
+  .wl{display:flex;align-items:center;gap:9px;padding:6px 0;font-size:13.5px;border-bottom:1px dashed var(--line)}
+  .wl .who{margin-left:auto;font-weight:600;color:var(--brand)}
+  .latebox{display:flex;align-items:center;gap:9px;padding:7px 0;font-size:13.5px}
+  .latebox .pill{margin-left:auto}
+  /* Dossier modal */
+  .overlay{position:fixed;inset:0;background:rgba(10,25,30,.5);display:none;align-items:flex-start;justify-content:center;padding:28px 16px;overflow:auto;z-index:50}
+  .overlay.open{display:flex}
+  .dossier{background:#fff;border-radius:14px;max-width:930px;width:100%;box-shadow:0 20px 60px rgba(5,20,25,.35);overflow:hidden}
+  .dhead{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;padding:18px 22px;display:flex;align-items:flex-start;gap:14px}
+  .dhead .x{margin-left:auto;cursor:pointer;font-size:22px;opacity:.85;line-height:1}
+  .dhead h2{margin:0;font-size:20px}
+  .dhead .tags{margin-top:7px;display:flex;gap:8px;flex-wrap:wrap;font-size:12.5px}
+  .dhead .tag{background:rgba(255,255,255,.16);padding:3px 9px;border-radius:6px}
+  .dbody{display:grid;grid-template-columns:1.1fr 1fr}
+  .dcol{padding:18px 22px}
+  .dcol+.dcol{border-left:1px solid var(--line)}
+  .sec{margin-bottom:20px}
+  .sec h3{font-size:12px;text-transform:uppercase;letter-spacing:.4px;color:var(--brand);margin:0 0 9px}
+  .kv{display:flex;font-size:13.5px;padding:3px 0}
+  .kv .k{width:120px;color:var(--muted)}
+  .kv .v{font-weight:550}
+  .doc{display:flex;align-items:center;gap:9px;padding:7px 9px;border:1px solid var(--line);border-radius:8px;margin-bottom:6px;font-size:13px}
+  .doc .ext{font-size:10px;font-weight:700;color:#fff;padding:3px 6px;border-radius:4px}
+  .ext.pdf{background:#cc2f2f}.ext.jpg,.ext.jpeg{background:#2f80ed}.ext.xlsx{background:#1f9d55}
+  .doc .dmeta{margin-left:auto;color:var(--muted);font-size:11.5px;text-align:right}
+  .tl{position:relative;padding-left:18px}
+  .tl::before{content:"";position:absolute;left:5px;top:3px;bottom:3px;width:2px;background:var(--line)}
+  .tl .item{position:relative;padding:0 0 14px}
+  .tl .item::before{content:"";position:absolute;left:-16px;top:3px;width:10px;height:10px;border-radius:50%;background:#fff;border:2px solid var(--brand2)}
+  .tl .item.done::before{background:var(--ok);border-color:var(--ok)}
+  .tl .item.curr::before{background:var(--warn);border-color:var(--warn)}
+  .tl .t{font-size:13.5px;font-weight:600}
+  .tl .d{font-size:11.5px;color:var(--muted)}
+  .msg{font-size:13px;padding:8px 0;border-bottom:1px dashed var(--line)}
+  .msg .head{font-size:11.5px;color:var(--muted);margin-bottom:2px}
+  .actions{padding:14px 22px;background:#f5f9fa;border-top:1px solid var(--line);display:flex;align-items:center;gap:12px}
+  button.primary{background:var(--action);color:#fff;border:0;padding:10px 16px;border-radius:8px;font-weight:600;cursor:pointer;font-size:13.5px}
+  button.primary:hover{filter:brightness(1.08)}
+  button.secondary{background:#fff;color:var(--brand);border:1px solid #c5d3d6;padding:10px 14px;border-radius:8px;font-weight:600;cursor:pointer;font-size:13.5px}
+  button.secondary:hover{background:#eef4f5}
+  .newbtn{margin-left:auto;background:var(--action);color:#fff;border:0;padding:9px 14px;border-radius:8px;font-weight:600;cursor:pointer;font-size:13px;align-self:center}
+  .newbtn:hover{filter:brightness(1.08)}
+  .frow{margin-bottom:12px;display:flex;flex-direction:column;gap:4px}
+  .frow label{font-size:12px;color:var(--muted);font-weight:600}
+  .frow input,.frow select{padding:9px 10px;border:1px solid var(--line);border-radius:8px;font-size:14px;font-family:inherit;background:#fff}
+  .frow input:focus,.frow select:focus{outline:none;border-color:var(--brand2)}
+  .actions .note{font-size:12px;color:var(--muted)}
+  .audit{font-size:11.5px;color:var(--muted)}
+  .audit .row{padding:2px 0}
+  footer{padding:14px 20px;color:var(--muted);font-size:12px;text-align:center}
+  @media(max-width:760px){.dbody{grid-template-columns:1fr}.dcol+.dcol{border-left:0;border-top:1px solid var(--line)}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="monogram">KS</div>
+  <div class="brand">
+    <div class="name">Kancelarija Sarić</div>
+    <div class="tag">Do vize bez stresa</div>
+  </div>
+  <div class="spacer"></div>
+  <div class="badge">izradio: Datamaks</div>
+  <div class="user">
+    <span class="avatar" style="background:#b1442f">NM</span>
+    <span>Nela Marinković — direktorica</span>
+  </div>
+</header>
+
+<div class="toolbar">
+  <div class="tab active" id="tab-board" onclick="setView('board')">Pregled predmeta</div>
+  <div class="tab" id="tab-report" onclick="setView('report')">Izvještaji</div>
+  <button class="newbtn" onclick="openNewCase()">+ Novi predmet</button>
+  <span class="demo-flag">DEMO — faze i podaci su primjer, prilagođava se vašem procesu</span>
+</div>
+
+<div id="view"></div>
+
+<footer>Demo prototip · podaci su izmišljeni · © Datamaks</footer>
+
+<div class="overlay" id="overlay" onclick="if(event.target===this)closeDossier()">
+  <div class="dossier" id="dossier"></div>
+</div>
+
+<script>
+// ---- Faze i tim ------------------------------------------------------------
+const PHASES = [
+  "Prijem i otvaranje predmeta",
+  "Prikupljanje dokumenata",
+  "Prevod i ovjera",
+  "Priprema i predaja aplikacije",
+  "Termin i praćenje",
+  "Odluka / Završeno"
+];
+// Članovi tima Kancelarije Sarić
+const WORKERS = {
+  NM:{ime:"Nela Marinković",  uloga:"Osnivač i direktor",            boja:"#b1442f"},
+  DM:{ime:"Dragan Matković",  uloga:"Stručni saradnik (vize DE)",    boja:"#2f6fb1"},
+  MT:{ime:"Milica Trkulja",   uloga:"Stručni saradnik",             boja:"#6a4fb1"},
+  LS:{ime:"Ljiljana Sarić",   uloga:"Sudski tumač za njemački",      boja:"#1f9d6b"},
+  ET:{ime:"Eva Trkulja",      uloga:"Asistent",                     boja:"#c79a3b"},
+  MM:{ime:"Marija Mudrinić",  uloga:"Administrativni asistent",      boja:"#c2632f"},
+};
+// Podrazumijevani radnik po fazi (ko preuzima kad predmet uđe u fazu)
+const PHASE_WORKER = ["MM","ET","LS","DM","MT","NM"];
+const LOGGED = "Nela Marinković"; // trenutno prijavljeni korisnik (za audit)
+function code(name){return Object.keys(WORKERS).find(k=>WORKERS[k].ime===name);}
+function av(c,small){const w=WORKERS[c];const s=small?'width:20px;height:20px;font-size:10px;':'';return `<span class="avatar" style="${s}background:${w.boja}" title="${w.ime} — ${w.uloga}">${c}</span>`;}
+
+// ---- Demo predmeti ---------------------------------------------------------
+let CASES = [
+  { id:"P-1042", ime:"Mirsad Hodžić", visa:"Radna viza", phase:1, days:4,
+    rodjen:"12.03.1988", pasos:"B0245781", drz:"BiH", tel:"+387 61 234 555", email:"mirsad.h@gmail.com", otvoren:"21.05.2026",
+    docs:[["Pasoš (kopija)","pdf","21.05.2026","Marija Mudrinić"],["Ugovor o radu","pdf","23.05.2026","Eva Trkulja"],["Fotografija","jpg","21.05.2026","Marija Mudrinić"]],
+    msgs:[["Eva Trkulja","24.05.2026 10:12","Klijent dostavio ugovor, fali još potvrda o smještaju."],["Marija Mudrinić","21.05.2026 09:30","Predmet otvoren, klijent informisan o potrebnoj dokumentaciji."]],
+    hist:[[0,"Prijem i otvaranje predmeta","21.05.2026","23.05.2026","Marija Mudrinić"],[1,"Prikupljanje dokumenata","23.05.2026",null,"Eva Trkulja"]] },
+
+  { id:"P-1039", ime:"Jovana Petrović", visa:"Spajanje porodice", phase:3, days:2,
+    rodjen:"05.07.1992", pasos:"B0192034", drz:"BiH", tel:"+387 65 778 221", email:"jovana.p@gmail.com", otvoren:"12.05.2026",
+    docs:[["Pasoš (kopija)","pdf","12.05.2026","Marija Mudrinić"],["Izvod vjenčanih","pdf","14.05.2026","Eva Trkulja"],["Prevod izvoda","pdf","27.05.2026","Ljiljana Sarić"],["Tabela prihoda","xlsx","26.05.2026","Dragan Matković"]],
+    msgs:[["Dragan Matković","28.05.2026 14:40","Aplikacija pripremljena, čeka se zakazivanje termina."],["Eva Trkulja","14.05.2026 11:05","Sva dokumenta prikupljena."]],
+    hist:[[0,"Prijem i otvaranje predmeta","12.05.2026","13.05.2026","Marija Mudrinić"],[1,"Prikupljanje dokumenata","13.05.2026","20.05.2026","Eva Trkulja"],[2,"Prevod i ovjera","20.05.2026","26.05.2026","Ljiljana Sarić"],[3,"Priprema i predaja aplikacije","26.05.2026",null,"Dragan Matković"]] },
+
+  { id:"P-1051", ime:"Emir Begić", visa:"Studentska viza", phase:0, days:1,
+    rodjen:"19.11.2001", pasos:"B0301119", drz:"BiH", tel:"+387 62 110 487", email:"emir.begic@gmail.com", otvoren:"03.06.2026",
+    docs:[["Pasoš (kopija)","jpg","03.06.2026","Marija Mudrinić"]],
+    msgs:[["Marija Mudrinić","03.06.2026 16:20","Prvi kontakt, klijent primljen na fakultet u Berlinu. Otvoren predmet."]],
+    hist:[[0,"Prijem i otvaranje predmeta","03.06.2026",null,"Marija Mudrinić"]] },
+
+  { id:"P-1033", ime:"Ana Marić", visa:"Radna viza", phase:2, days:6,
+    rodjen:"28.02.1990", pasos:"B0177640", drz:"BiH", tel:"+387 63 905 142", email:"ana.maric90@gmail.com", otvoren:"06.05.2026",
+    docs:[["Pasoš (kopija)","pdf","06.05.2026","Marija Mudrinić"],["Diploma","pdf","09.05.2026","Eva Trkulja"],["Ugovor o radu","pdf","09.05.2026","Eva Trkulja"],["Fotografija","jpeg","06.05.2026","Marija Mudrinić"]],
+    msgs:[["Ljiljana Sarić","29.05.2026 09:15","Diploma na sudskom prijevodu, rok 5 dana."],["Eva Trkulja","09.05.2026 12:00","Dokumenti kompletni, prosljeđujem na prevod."]],
+    hist:[[0,"Prijem i otvaranje predmeta","06.05.2026","07.05.2026","Marija Mudrinić"],[1,"Prikupljanje dokumenata","07.05.2026","13.05.2026","Eva Trkulja"],[2,"Prevod i ovjera","28.05.2026",null,"Ljiljana Sarić"]] },
+
+  { id:"P-1047", ime:"Tarik Suljić", visa:"Radna viza", phase:4, days:3,
+    rodjen:"14.09.1985", pasos:"B0260015", drz:"BiH", tel:"+387 61 540 309", email:"tarik.suljic@gmail.com", otvoren:"18.05.2026",
+    docs:[["Pasoš (kopija)","pdf","18.05.2026","Marija Mudrinić"],["Ugovor o radu","pdf","20.05.2026","Eva Trkulja"],["Prevod ugovora","pdf","25.05.2026","Ljiljana Sarić"],["Potvrda termina","pdf","30.05.2026","Milica Trkulja"]],
+    msgs:[["Milica Trkulja","30.05.2026 13:25","Termin u ambasadi zakazan za 09.06.2026. Klijent obaviješten."]],
+    hist:[[0,"Prijem i otvaranje predmeta","18.05.2026","19.05.2026","Marija Mudrinić"],[1,"Prikupljanje dokumenata","19.05.2026","24.05.2026","Eva Trkulja"],[2,"Prevod i ovjera","24.05.2026","28.05.2026","Ljiljana Sarić"],[3,"Priprema i predaja aplikacije","28.05.2026","30.05.2026","Dragan Matković"],[4,"Termin i praćenje","30.05.2026",null,"Milica Trkulja"]] },
+
+  { id:"P-1020", ime:"Ivana Kovač", visa:"Spajanje porodice", phase:5, days:0, done:true,
+    rodjen:"02.01.1994", pasos:"B0144872", drz:"BiH", tel:"+387 66 201 778", email:"ivana.kovac@gmail.com", otvoren:"15.04.2026",
+    docs:[["Pasoš (kopija)","pdf","15.04.2026","Marija Mudrinić"],["Izvod vjenčanih","pdf","17.04.2026","Eva Trkulja"],["Prevod","pdf","24.04.2026","Ljiljana Sarić"],["Odobrenje vize","pdf","29.05.2026","Nela Marinković"]],
+    msgs:[["Nela Marinković","29.05.2026 15:00","Viza odobrena! Klijent preuzeo pasoš. Predmet zatvoren."]],
+    hist:[[0,"Prijem i otvaranje predmeta","15.04.2026","16.04.2026","Marija Mudrinić"],[1,"Prikupljanje dokumenata","16.04.2026","22.04.2026","Eva Trkulja"],[2,"Prevod i ovjera","22.04.2026","28.04.2026","Ljiljana Sarić"],[3,"Priprema i predaja aplikacije","28.04.2026","05.05.2026","Dragan Matković"],[4,"Termin i praćenje","05.05.2026","29.05.2026","Milica Trkulja"],[5,"Odluka / Završeno","29.05.2026","29.05.2026","Nela Marinković"]] },
+
+  { id:"P-1053", ime:"Adnan Ćosić", visa:"Radna viza", phase:0, days:0,
+    rodjen:"07.04.1991", pasos:"B0312044", drz:"BiH", tel:"+387 61 882 110", email:"adnan.cosic@gmail.com", otvoren:"04.06.2026",
+    docs:[["Pasoš (kopija)","jpg","04.06.2026","Marija Mudrinić"]],
+    msgs:[["Marija Mudrinić","04.06.2026 09:05","Klijent se javio preko preporuke. Predmet otvoren, poslan spisak dokumenata."]],
+    hist:[[0,"Prijem i otvaranje predmeta","04.06.2026",null,"Marija Mudrinić"]] },
+
+  { id:"P-1052", ime:"Sara Jukić", visa:"Spajanje porodice", phase:0, days:2,
+    rodjen:"16.08.1995", pasos:"B0309887", drz:"BiH", tel:"+387 65 443 902", email:"sara.jukic@gmail.com", otvoren:"02.06.2026",
+    docs:[["Pasoš (kopija)","pdf","02.06.2026","Marija Mudrinić"]],
+    msgs:[["Marija Mudrinić","02.06.2026 11:40","Otvoren predmet, suprug već u Njemačkoj. Prikupljamo dokaze o braku."]],
+    hist:[[0,"Prijem i otvaranje predmeta","02.06.2026",null,"Marija Mudrinić"]] },
+
+  { id:"P-1050", ime:"Vedran Lukić", visa:"Priznavanje kvalifikacija", phase:1, days:4,
+    rodjen:"22.12.1987", pasos:"B0298321", drz:"BiH", tel:"+387 63 220 740", email:"vedran.lukic@gmail.com", otvoren:"30.05.2026",
+    docs:[["Pasoš (kopija)","pdf","30.05.2026","Marija Mudrinić"],["Diploma","pdf","01.06.2026","Eva Trkulja"]],
+    msgs:[["Eva Trkulja","02.06.2026 13:10","Pokrenuta nostrifikacija diplome, kontaktiran nadležni organ."]],
+    hist:[[0,"Prijem i otvaranje predmeta","30.05.2026","31.05.2026","Marija Mudrinić"],[1,"Prikupljanje dokumenata","31.05.2026",null,"Eva Trkulja"]] },
+
+  { id:"P-1045", ime:"Amra Delić", visa:"Studentska viza", phase:1, days:6,
+    rodjen:"03.10.2002", pasos:"B0305519", drz:"BiH", tel:"+387 62 778 003", email:"amra.delic@gmail.com", otvoren:"27.05.2026",
+    docs:[["Pasoš (kopija)","jpg","27.05.2026","Marija Mudrinić"],["Pismo prijema fakulteta","pdf","29.05.2026","Eva Trkulja"]],
+    msgs:[["Eva Trkulja","03.06.2026 10:20","Čekamo potvrdu o finansijama (blokirani račun). Klijent požuruje."]],
+    hist:[[0,"Prijem i otvaranje predmeta","27.05.2026","29.05.2026","Marija Mudrinić"],[1,"Prikupljanje dokumenata","29.05.2026",null,"Eva Trkulja"]] },
+
+  { id:"P-1040", ime:"Goran Babić", visa:"Radna viza", phase:2, days:2,
+    rodjen:"11.05.1983", pasos:"B0288190", drz:"BiH", tel:"+387 66 510 228", email:"goran.babic@gmail.com", otvoren:"20.05.2026",
+    docs:[["Pasoš (kopija)","pdf","20.05.2026","Marija Mudrinić"],["Ugovor o radu","pdf","24.05.2026","Eva Trkulja"],["Diploma","pdf","24.05.2026","Eva Trkulja"]],
+    msgs:[["Ljiljana Sarić","03.06.2026 09:00","Ugovor i diploma na sudskom prijevodu."]],
+    hist:[[0,"Prijem i otvaranje predmeta","20.05.2026","21.05.2026","Marija Mudrinić"],[1,"Prikupljanje dokumenata","21.05.2026","27.05.2026","Eva Trkulja"],[2,"Prevod i ovjera","02.06.2026",null,"Ljiljana Sarić"]] },
+
+  { id:"P-1037", ime:"Nikolina Perić", visa:"Spajanje porodice", phase:3, days:1,
+    rodjen:"27.06.1990", pasos:"B0281443", drz:"BiH", tel:"+387 65 119 654", email:"nikolina.peric@gmail.com", otvoren:"18.05.2026",
+    docs:[["Pasoš (kopija)","pdf","18.05.2026","Marija Mudrinić"],["Izvod vjenčanih","pdf","20.05.2026","Eva Trkulja"],["Prevod","pdf","30.05.2026","Ljiljana Sarić"]],
+    msgs:[["Dragan Matković","03.06.2026 15:30","Aplikacija u pripremi, provjeravam komplet dokaza o prihodima."]],
+    hist:[[0,"Prijem i otvaranje predmeta","18.05.2026","19.05.2026","Marija Mudrinić"],[1,"Prikupljanje dokumenata","19.05.2026","24.05.2026","Eva Trkulja"],[2,"Prevod i ovjera","24.05.2026","31.05.2026","Ljiljana Sarić"],[3,"Priprema i predaja aplikacije","03.06.2026",null,"Dragan Matković"]] },
+
+  { id:"P-1044", ime:"Haris Tahirović", visa:"Radna viza", phase:3, days:4,
+    rodjen:"09.02.1989", pasos:"B0291077", drz:"BiH", tel:"+387 61 304 998", email:"haris.tah@gmail.com", otvoren:"21.05.2026",
+    docs:[["Pasoš (kopija)","pdf","21.05.2026","Marija Mudrinić"],["Ugovor o radu","pdf","23.05.2026","Eva Trkulja"],["Prevod ugovora","pdf","29.05.2026","Ljiljana Sarić"]],
+    msgs:[["Dragan Matković","31.05.2026 12:15","Popunjavam formular za radnu vizu, traži se još potvrda o smještaju."]],
+    hist:[[0,"Prijem i otvaranje predmeta","21.05.2026","22.05.2026","Marija Mudrinić"],[1,"Prikupljanje dokumenata","22.05.2026","27.05.2026","Eva Trkulja"],[2,"Prevod i ovjera","27.05.2026","31.05.2026","Ljiljana Sarić"],[3,"Priprema i predaja aplikacije","31.05.2026",null,"Dragan Matković"]] },
+
+  { id:"P-1031", ime:"Milan Đukić", visa:"Studije u Sloveniji", phase:4, days:6,
+    rodjen:"14.07.2000", pasos:"B0270512", drz:"BiH", tel:"+387 63 877 145", email:"milan.djukic@gmail.com", otvoren:"02.05.2026",
+    docs:[["Pasoš (kopija)","pdf","02.05.2026","Marija Mudrinić"],["Upis na fakultet","pdf","08.05.2026","Eva Trkulja"],["Prevod","pdf","16.05.2026","Ljiljana Sarić"],["Potvrda termina","pdf","27.05.2026","Milica Trkulja"]],
+    msgs:[["Milica Trkulja","03.06.2026 14:05","Termin prošao, čeka se odgovor konzulata. Pratim status."]],
+    hist:[[0,"Prijem i otvaranje predmeta","02.05.2026","03.05.2026","Marija Mudrinić"],[1,"Prikupljanje dokumenata","03.05.2026","10.05.2026","Eva Trkulja"],[2,"Prevod i ovjera","10.05.2026","18.05.2026","Ljiljana Sarić"],[3,"Priprema i predaja aplikacije","18.05.2026","29.05.2026","Dragan Matković"],[4,"Termin i praćenje","29.05.2026",null,"Milica Trkulja"]] },
+
+  { id:"P-1018", ime:"Sanja Novak", visa:"Radna viza", phase:5, days:0, done:true,
+    rodjen:"25.03.1986", pasos:"B0140233", drz:"BiH", tel:"+387 66 332 891", email:"sanja.novak@gmail.com", otvoren:"10.04.2026",
+    docs:[["Pasoš (kopija)","pdf","10.04.2026","Marija Mudrinić"],["Ugovor o radu","pdf","13.04.2026","Eva Trkulja"],["Prevod","pdf","20.04.2026","Ljiljana Sarić"],["Odobrenje vize","pdf","26.05.2026","Nela Marinković"]],
+    msgs:[["Nela Marinković","26.05.2026 16:10","Viza odobrena, klijent zaposlen u Münchenu. Predmet zatvoren."]],
+    hist:[[0,"Prijem i otvaranje predmeta","10.04.2026","11.04.2026","Marija Mudrinić"],[1,"Prikupljanje dokumenata","11.04.2026","18.04.2026","Eva Trkulja"],[2,"Prevod i ovjera","18.04.2026","24.04.2026","Ljiljana Sarić"],[3,"Priprema i predaja aplikacije","24.04.2026","02.05.2026","Dragan Matković"],[4,"Termin i praćenje","02.05.2026","26.05.2026","Milica Trkulja"],[5,"Odluka / Završeno","26.05.2026","26.05.2026","Nela Marinković"]] },
+
+  { id:"P-1015", ime:"Bojan Ristić", visa:"Produženje vize", phase:5, days:0, done:true,
+    rodjen:"30.11.1984", pasos:"B0131900", drz:"BiH", tel:"+387 61 700 432", email:"bojan.ristic@gmail.com", otvoren:"02.04.2026",
+    docs:[["Pasoš (kopija)","pdf","02.04.2026","Marija Mudrinić"],["Postojeća viza","pdf","02.04.2026","Marija Mudrinić"],["Odobrenje produženja","pdf","20.05.2026","Nela Marinković"]],
+    msgs:[["Nela Marinković","20.05.2026 10:00","Produženje boravka odobreno. Predmet zatvoren."]],
+    hist:[[0,"Prijem i otvaranje predmeta","02.04.2026","03.04.2026","Marija Mudrinić"],[1,"Prikupljanje dokumenata","03.04.2026","09.04.2026","Eva Trkulja"],[2,"Prevod i ovjera","09.04.2026","15.04.2026","Ljiljana Sarić"],[3,"Priprema i predaja aplikacije","15.04.2026","25.04.2026","Dragan Matković"],[4,"Termin i praćenje","25.04.2026","20.05.2026","Milica Trkulja"],[5,"Odluka / Završeno","20.05.2026","20.05.2026","Nela Marinković"]] },
+
+  { id:"P-1054", ime:"Lejla Hadžić", visa:"Radna viza", phase:0, days:1,
+    rodjen:"21.01.1993", pasos:"B0311500", drz:"BiH", tel:"+387 62 445 770", email:"lejla.hadzic@gmail.com", otvoren:"03.06.2026",
+    docs:[["Pasoš (kopija)","jpg","03.06.2026","Marija Mudrinić"]],
+    msgs:[["Marija Mudrinić","03.06.2026 12:30","Otvoren predmet, klijentica ima ponudu poslodavca iz Hamburga."]],
+    hist:[[0,"Prijem i otvaranje predmeta","03.06.2026",null,"Marija Mudrinić"]] },
+
+  { id:"P-1049", ime:"Stefan Jovanović", visa:"Studentska viza", phase:1, days:5,
+    rodjen:"12.09.2001", pasos:"B0307221", drz:"BiH", tel:"+387 65 990 114", email:"stefan.jov@gmail.com", otvoren:"29.05.2026",
+    docs:[["Pasoš (kopija)","pdf","29.05.2026","Marija Mudrinić"],["Pismo fakulteta","pdf","31.05.2026","Eva Trkulja"]],
+    msgs:[["Eva Trkulja","02.06.2026 09:40","Nedostaje dokaz o smještaju u Njemačkoj."]],
+    hist:[[0,"Prijem i otvaranje predmeta","29.05.2026","30.05.2026","Marija Mudrinić"],[1,"Prikupljanje dokumenata","30.05.2026",null,"Eva Trkulja"]] },
+
+  { id:"P-1048", ime:"Marina Kovačević", visa:"Spajanje porodice", phase:1, days:3,
+    rodjen:"06.04.1996", pasos:"B0308010", drz:"BiH", tel:"+387 63 112 887", email:"marina.kov@gmail.com", otvoren:"31.05.2026",
+    docs:[["Pasoš (kopija)","pdf","31.05.2026","Marija Mudrinić"]],
+    msgs:[["Eva Trkulja","02.06.2026 15:10","Prikupljamo izvod vjenčanih i dokaze o zajedničkom životu."]],
+    hist:[[0,"Prijem i otvaranje predmeta","31.05.2026","01.06.2026","Marija Mudrinić"],[1,"Prikupljanje dokumenata","01.06.2026",null,"Eva Trkulja"]] },
+
+  { id:"P-1043", ime:"Damir Alić", visa:"Radna viza", phase:2, days:3,
+    rodjen:"17.06.1988", pasos:"B0290455", drz:"BiH", tel:"+387 61 556 233", email:"damir.alic@gmail.com", otvoren:"22.05.2026",
+    docs:[["Pasoš (kopija)","pdf","22.05.2026","Marija Mudrinić"],["Ugovor o radu","pdf","26.05.2026","Eva Trkulja"]],
+    msgs:[["Ljiljana Sarić","02.06.2026 10:25","Ugovor na prijevodu, gotovo za 3 dana."]],
+    hist:[[0,"Prijem i otvaranje predmeta","22.05.2026","23.05.2026","Marija Mudrinić"],[1,"Prikupljanje dokumenata","23.05.2026","31.05.2026","Eva Trkulja"],[2,"Prevod i ovjera","01.06.2026",null,"Ljiljana Sarić"]] },
+
+  { id:"P-1041", ime:"Jasmina Begović", visa:"Priznavanje kvalifikacija", phase:2, days:5,
+    rodjen:"28.11.1985", pasos:"B0285990", drz:"BiH", tel:"+387 66 778 540", email:"jasmina.beg@gmail.com", otvoren:"19.05.2026",
+    docs:[["Pasoš (kopija)","pdf","19.05.2026","Marija Mudrinić"],["Diploma","pdf","23.05.2026","Eva Trkulja"],["Radno iskustvo (potvrde)","pdf","23.05.2026","Eva Trkulja"]],
+    msgs:[["Ljiljana Sarić","03.06.2026 11:00","Obiman prevod medicinske dokumentacije, traje duže."]],
+    hist:[[0,"Prijem i otvaranje predmeta","19.05.2026","20.05.2026","Marija Mudrinić"],[1,"Prikupljanje dokumenata","20.05.2026","29.05.2026","Eva Trkulja"],[2,"Prevod i ovjera","30.05.2026",null,"Ljiljana Sarić"]] },
+
+  { id:"P-1038", ime:"Nemanja Ilić", visa:"Radna viza", phase:3, days:2,
+    rodjen:"03.03.1990", pasos:"B0282110", drz:"BiH", tel:"+387 65 334 901", email:"nemanja.ilic@gmail.com", otvoren:"17.05.2026",
+    docs:[["Pasoš (kopija)","pdf","17.05.2026","Marija Mudrinić"],["Ugovor o radu","pdf","19.05.2026","Eva Trkulja"],["Prevod","pdf","30.05.2026","Ljiljana Sarić"]],
+    msgs:[["Dragan Matković","03.06.2026 13:45","Aplikacija skoro spremna, zakazujem termin sljedeće sedmice."]],
+    hist:[[0,"Prijem i otvaranje predmeta","17.05.2026","18.05.2026","Marija Mudrinić"],[1,"Prikupljanje dokumenata","18.05.2026","23.05.2026","Eva Trkulja"],[2,"Prevod i ovjera","23.05.2026","01.06.2026","Ljiljana Sarić"],[3,"Priprema i predaja aplikacije","02.06.2026",null,"Dragan Matković"]] },
+
+  { id:"P-1035", ime:"Tijana Savić", visa:"Spajanje porodice", phase:4, days:3,
+    rodjen:"24.05.1994", pasos:"B0276330", drz:"BiH", tel:"+387 62 220 488", email:"tijana.savic@gmail.com", otvoren:"12.05.2026",
+    docs:[["Pasoš (kopija)","pdf","12.05.2026","Marija Mudrinić"],["Izvod vjenčanih","pdf","15.05.2026","Eva Trkulja"],["Prevod","pdf","23.05.2026","Ljiljana Sarić"],["Potvrda termina","pdf","31.05.2026","Milica Trkulja"]],
+    msgs:[["Milica Trkulja","02.06.2026 09:30","Termin u ambasadi 11.06.2026, klijentica pripremljena za intervju."]],
+    hist:[[0,"Prijem i otvaranje predmeta","12.05.2026","13.05.2026","Marija Mudrinić"],[1,"Prikupljanje dokumenata","13.05.2026","19.05.2026","Eva Trkulja"],[2,"Prevod i ovjera","19.05.2026","26.05.2026","Ljiljana Sarić"],[3,"Priprema i predaja aplikacije","26.05.2026","01.06.2026","Dragan Matković"],[4,"Termin i praćenje","01.06.2026",null,"Milica Trkulja"]] },
+
+  { id:"P-1029", ime:"Aleksandar Tomić", visa:"Državljanstvo", phase:4, days:5,
+    rodjen:"09.08.1982", pasos:"B0268441", drz:"BiH", tel:"+387 61 905 332", email:"aleksandar.tomic@gmail.com", otvoren:"28.04.2026",
+    docs:[["Pasoš (kopija)","pdf","28.04.2026","Marija Mudrinić"],["Dokaz o boravku","pdf","04.05.2026","Eva Trkulja"],["Prevod dokumenata","pdf","18.05.2026","Ljiljana Sarić"],["Potvrda termina","pdf","27.05.2026","Milica Trkulja"]],
+    msgs:[["Milica Trkulja","03.06.2026 16:00","Predat zahtjev za državljanstvo, čeka se obrada nadležnog organa."]],
+    hist:[[0,"Prijem i otvaranje predmeta","28.04.2026","29.04.2026","Marija Mudrinić"],[1,"Prikupljanje dokumenata","29.04.2026","06.05.2026","Eva Trkulja"],[2,"Prevod i ovjera","06.05.2026","16.05.2026","Ljiljana Sarić"],[3,"Priprema i predaja aplikacije","16.05.2026","30.05.2026","Dragan Matković"],[4,"Termin i praćenje","30.05.2026",null,"Milica Trkulja"]] },
+
+  { id:"P-1025", ime:"Ena Mujić", visa:"Studentska viza", phase:5, days:0, done:true,
+    rodjen:"15.02.2003", pasos:"B0150772", drz:"BiH", tel:"+387 63 440 119", email:"ena.mujic@gmail.com", otvoren:"18.04.2026",
+    docs:[["Pasoš (kopija)","pdf","18.04.2026","Marija Mudrinić"],["Pismo fakulteta","pdf","21.04.2026","Eva Trkulja"],["Prevod","pdf","28.04.2026","Ljiljana Sarić"],["Odobrenje vize","pdf","30.05.2026","Nela Marinković"]],
+    msgs:[["Nela Marinković","30.05.2026 14:20","Studentska viza odobrena, upis na Univerzitet u Kölnu. Predmet zatvoren."]],
+    hist:[[0,"Prijem i otvaranje predmeta","18.04.2026","19.04.2026","Marija Mudrinić"],[1,"Prikupljanje dokumenata","19.04.2026","25.04.2026","Eva Trkulja"],[2,"Prevod i ovjera","25.04.2026","02.05.2026","Ljiljana Sarić"],[3,"Priprema i predaja aplikacije","02.05.2026","12.05.2026","Dragan Matković"],[4,"Termin i praćenje","12.05.2026","30.05.2026","Milica Trkulja"],[5,"Odluka / Završeno","30.05.2026","30.05.2026","Nela Marinković"]] },
+
+  { id:"P-1012", ime:"Dejan Kovač", visa:"Radna viza", phase:5, days:0, done:true,
+    rodjen:"11.10.1987", pasos:"B0125640", drz:"BiH", tel:"+387 66 110 905", email:"dejan.kovac@gmail.com", otvoren:"28.03.2026",
+    docs:[["Pasoš (kopija)","pdf","28.03.2026","Marija Mudrinić"],["Ugovor o radu","pdf","31.03.2026","Eva Trkulja"],["Prevod","pdf","08.04.2026","Ljiljana Sarić"],["Odobrenje vize","pdf","15.05.2026","Nela Marinković"]],
+    msgs:[["Nela Marinković","15.05.2026 11:30","Viza odobrena, klijent počinje rad u Frankfurtu. Predmet zatvoren."]],
+    hist:[[0,"Prijem i otvaranje predmeta","28.03.2026","29.03.2026","Marija Mudrinić"],[1,"Prikupljanje dokumenata","29.03.2026","05.04.2026","Eva Trkulja"],[2,"Prevod i ovjera","05.04.2026","11.04.2026","Ljiljana Sarić"],[3,"Priprema i predaja aplikacije","11.04.2026","20.04.2026","Dragan Matković"],[4,"Termin i praćenje","20.04.2026","15.05.2026","Milica Trkulja"],[5,"Odluka / Završeno","15.05.2026","15.05.2026","Nela Marinković"]] },
+];
+
+// trenutni radnik = podrazumijevani radnik trenutne faze
+CASES.forEach(c=>c.worker=PHASE_WORKER[c.phase]);
+
+// ---- View switching --------------------------------------------------------
+let view="board";
+function setView(v){
+  view=v;
+  document.getElementById("tab-board").classList.toggle("active",v==="board");
+  document.getElementById("tab-report").classList.toggle("active",v==="report");
+  v==="board"?renderBoard():renderReport();
+}
+
+// ---- Kanban ----------------------------------------------------------------
+function renderBoard(){
+  const el=document.getElementById("view");
+  const board=document.createElement("div"); board.className="board";
+  PHASES.forEach((ph,i)=>{
+    const inCol=CASES.filter(c=>c.phase===i);
+    const col=document.createElement("div"); col.className="col";
+    col.innerHTML=`<h2>${ph} <span class="count">(${inCol.length})</span></h2><div class="cards"></div>`;
+    const cards=col.querySelector(".cards");
+    inCol.forEach(c=>{
+      const late=c.days>=5 && !c.done;
+      const daysPill=c.done?`<span class="pill done">završeno</span>`
+        :`<span class="pill ${late?'late':'days'}">${c.days} ${c.days===1?'dan':'dana'} u fazi</span>`;
+      const card=document.createElement("div"); card.className="pcard"; card.onclick=()=>openDossier(c.id);
+      card.innerHTML=`<div class="nm">${c.ime}</div><div class="visa">${c.visa} · ${c.id}</div>
+        <div class="meta">${daysPill}<span class="who">${av(c.worker,true)}</span></div>`;
+      cards.appendChild(card);
+    });
+    board.appendChild(col);
+  });
+  el.replaceChildren(board);
+}
+
+// ---- Izvještaji ------------------------------------------------------------
+function renderReport(){
+  const el=document.getElementById("view");
+  const active=CASES.filter(c=>!c.done);
+  const doneC=CASES.filter(c=>c.done);
+  // prosječno trajanje (otvoren → danas ili kraj)
+  const totals=CASES.map(c=>durDays(c.otvoren, c.done?c.hist[c.hist.length-1][3]:todayStr()));
+  const avgTotal=Math.round(totals.reduce((a,b)=>a+b,0)/totals.length);
+  // prosječno trajanje po fazi (iz završenih instanci faza)
+  const perPhase=PHASES.map(()=>[]);
+  CASES.forEach(c=>c.hist.forEach(h=>{ if(h[3]) perPhase[h[0]].push(durDays(h[2],h[3])); }));
+  const phaseAvg=perPhase.map(a=>a.length?Math.round(a.reduce((x,y)=>x+y,0)/a.length*10)/10:0);
+  const maxAvg=Math.max(...phaseAvg);
+  const slowIdx=phaseAvg.indexOf(maxAvg);
+  // predmeti po radniku (aktivni)
+  const load={}; active.forEach(c=>load[c.worker]=(load[c.worker]||0)+1);
+  // kašnjenja
+  const late=active.filter(c=>c.days>=5);
+
+  const bars=phaseAvg.map((v,i)=>`
+    <div class="bar"><span class="blab">${PHASES[i]}</span>
+      <span class="track"><span class="fill ${i===slowIdx?'max':''}" style="width:${maxAvg?Math.max(6,v/maxAvg*100):0}%"></span></span>
+      <span class="val">${v} dana</span></div>`).join("");
+  const loadRows=Object.keys(load).sort((a,b)=>load[b]-load[a]).map(k=>
+    `<div class="wl">${av(k,true)} ${WORKERS[k].ime} <span style="color:var(--muted);font-size:12px">· ${WORKERS[k].uloga}</span><span class="who">${load[k]} ${load[k]===1?'predmet':'predmeta'}</span></div>`).join("");
+  const lateRows=late.length?late.map(c=>
+    `<div class="latebox">${av(c.worker,true)} <b>${c.ime}</b> <span style="color:var(--muted);font-size:12px">· ${PHASES[c.phase]} · zadužen/a: <b style="color:var(--brand)">${WORKERS[c.worker].ime}</b></span><span class="pill late">${c.days} dana</span></div>`).join("")
+    :`<div style="color:var(--muted);font-size:13px">Nema predmeta koji kasne. 👍</div>`;
+
+  el.innerHTML=`<div class="report">
+    <div class="stat-row">
+      <div class="stat"><div class="big">${active.length}</div><div class="lab">Aktivnih predmeta</div></div>
+      <div class="stat"><div class="big">${doneC.length}</div><div class="lab">Završeno (ovaj mjesec)</div></div>
+      <div class="stat"><div class="big">${avgTotal}</div><div class="lab">Prosj. trajanje predmeta (dana)</div></div>
+      <div class="stat"><div class="big" style="color:var(--late)">${late.length}</div><div class="lab">Predmeta koji kasne</div></div>
+    </div>
+    <div class="panel">
+      <h3>Prosječno trajanje po fazi — usko grlo: <span style="color:var(--late)">${PHASES[slowIdx]}</span></h3>
+      ${bars}
+    </div>
+    <div class="panel"><h3>Opterećenje po radniku (aktivni predmeti)</h3>${loadRows}</div>
+    <div class="panel"><h3>Predmeti koji kasne (≥ 5 dana u fazi)</h3>${lateRows}</div>
+    <p style="color:var(--muted);font-size:12px">* Brojke su izračunate iz demo podataka u realnom vremenu.</p>
+  </div>`;
+}
+
+// ---- Dosije ----------------------------------------------------------------
+let auditLog=[];
+function openDossier(id){
+  const c=CASES.find(x=>x.id===id);
+  const totalStart=c.hist[0][2];
+  const docsHtml=c.docs.map(d=>`<div class="doc"><span class="ext ${d[1]}">${d[1].toUpperCase()}</span><span>${d[0]}</span><span class="dmeta">${d[3]}<br>${d[2]}</span></div>`).join("");
+  const msgHtml=c.msgs.map(m=>`<div class="msg"><div class="head">${m[0]} · ${m[1]}</div>${m[2]}</div>`).join("");
+  const histHtml=c.hist.map(h=>{
+    const isCurr=h[3]===null; const dur=h[3]?durDays(h[2],h[3])+" dana":"u toku";
+    return `<div class="item ${isCurr?'curr':'done'}"><div class="t">${h[1]}</div><div class="d">${h[2]} → ${h[3]||"…"} · ${dur} · ${h[4]}</div></div>`;
+  }).join("");
+  const auditHtml=auditLog.filter(a=>a.id===id).map(a=>`<div class="row">• ${a.txt}</div>`).join("")||`<div class="row">• Predmet otvoren ${c.otvoren} (Marija Mudrinić)</div>`;
+  const canHandoff=c.phase<PHASES.length-1 && !c.done;
+  const nextW=canHandoff?WORKERS[PHASE_WORKER[c.phase+1]].ime:null;
+  const nextPh=canHandoff?PHASES[c.phase+1]:null;
+
+  document.getElementById("dossier").innerHTML=`
+    <div class="dhead">
+      <div><h2>${c.ime}</h2>
+        <div class="tags"><span class="tag">${c.id}</span><span class="tag">${c.visa}</span>
+        <span class="tag">Faza: ${PHASES[c.phase]}</span>
+        <span class="tag">Zadužen/a: ${WORKERS[c.worker].ime}</span>
+        <span class="tag">Otvoren: ${durDays(totalStart, c.done?c.hist[c.hist.length-1][3]:todayStr())} dana</span></div>
+      </div><div class="x" onclick="closeDossier()">×</div>
+    </div>
+    <div class="dbody">
+      <div class="dcol">
+        <div class="sec"><h3>Podaci o klijentu</h3>
+          <div class="kv"><span class="k">Datum rođenja</span><span class="v">${c.rodjen}</span></div>
+          <div class="kv"><span class="k">Pasoš</span><span class="v">${c.pasos}</span></div>
+          <div class="kv"><span class="k">Državljanstvo</span><span class="v">${c.drz}</span></div>
+          <div class="kv"><span class="k">Telefon</span><span class="v">${c.tel}</span></div>
+          <div class="kv"><span class="k">E-mail</span><span class="v">${c.email}</span></div>
+          <div class="kv"><span class="k">Predmet otvoren</span><span class="v">${c.otvoren}</span></div>
+        </div>
+        <div class="sec"><h3>Dokumenti (${c.docs.length})</h3>${docsHtml}</div>
+        <div class="sec"><h3>Audit — izmjene</h3><div class="audit">${auditHtml}</div></div>
+      </div>
+      <div class="dcol">
+        <div class="sec"><h3>Historija faza</h3><div class="tl">${histHtml}</div></div>
+        <div class="sec"><h3>Komunikacija i napomene</h3>${msgHtml}</div>
+      </div>
+    </div>
+    <div class="actions">
+      ${c.phase>0?`<button class="secondary" onclick="returnPhase('${c.id}')">← Vrati u prethodnu fazu</button>`:''}
+      ${canHandoff
+        ? `<button class="primary" onclick="handoff('${c.id}')">✓ Završi fazu i proslijedi</button>
+           <span class="note">→ ${nextPh} · preuzima <b>${nextW}</b></span>`
+        : `<span class="note">${c.done?'Predmet je završen.':'Posljednja faza.'}</span>`}
+    </div>`;
+  document.getElementById("overlay").classList.add("open");
+}
+function handoff(id){
+  const c=CASES.find(x=>x.id===id);
+  const finished=PHASES[c.phase]; const finishedBy=WORKERS[c.worker].ime;
+  const h=c.hist.find(x=>x[3]===null); if(h) h[3]=todayStr();
+  c.phase++; c.days=0; c.worker=PHASE_WORKER[c.phase];
+  c.hist.push([c.phase,PHASES[c.phase],todayStr(),(c.phase===PHASES.length-1?todayStr():null),WORKERS[c.worker].ime]);
+  if(c.phase===PHASES.length-1) c.done=true;
+  auditLog.push({id,txt:`Faza „${finished}" označena gotovom — ${finishedBy}, ${todayStr()} ${nowStr()}. Proslijeđeno: ${WORKERS[c.worker].ime}.`});
+  if(view==="board") renderBoard();
+  openDossier(id);
+}
+function closeDossier(){document.getElementById("overlay").classList.remove("open");}
+
+// ---- Novi predmet ----------------------------------------------------------
+const VISA_TIPOVI=["Radna viza","Spajanje porodice","Studentska viza","Priznavanje kvalifikacija","Produženje vize","Studije u Sloveniji","Državljanstvo"];
+function openNewCase(){
+  document.getElementById("dossier").innerHTML=`
+    <div class="dhead"><div><h2>Novi predmet</h2>
+      <div class="tags"><span class="tag">Ulazi u fazu: ${PHASES[0]}</span><span class="tag">Preuzima: ${WORKERS.MM.ime}</span></div>
+      </div><div class="x" onclick="closeDossier()">×</div></div>
+    <div style="padding:20px 22px">
+      <div class="frow"><label>Ime i prezime *</label><input id="f_ime" placeholder="npr. Ime Prezime"></div>
+      <div class="frow"><label>Tip vize</label><select id="f_visa">${VISA_TIPOVI.map(v=>`<option>${v}</option>`).join("")}</select></div>
+      <div class="frow"><label>Telefon</label><input id="f_tel" placeholder="+387 ..."></div>
+      <div class="frow"><label>E-mail</label><input id="f_email" placeholder="email@primjer.com"></div>
+      <div class="frow"><label>Napomena (opciono)</label><input id="f_note" placeholder="kratka napomena uz otvaranje predmeta"></div>
+    </div>
+    <div class="actions"><button class="primary" onclick="createCase()">Kreiraj predmet</button>
+      <span class="note">Predmet se otvara i dodjeljuje za prijem (${WORKERS.MM.ime}).</span></div>`;
+  document.getElementById("overlay").classList.add("open");
+  setTimeout(()=>document.getElementById("f_ime").focus(),50);
+}
+function createCase(){
+  const ime=(document.getElementById("f_ime").value||"").trim();
+  if(!ime){document.getElementById("f_ime").focus();return;}
+  const visa=document.getElementById("f_visa").value;
+  const tel=(document.getElementById("f_tel").value||"").trim()||"—";
+  const email=(document.getElementById("f_email").value||"").trim()||"—";
+  const note=(document.getElementById("f_note").value||"").trim();
+  const nextNum=Math.max(...CASES.map(c=>+c.id.split("-")[1]))+1;
+  const id="P-"+nextNum;
+  CASES.push({ id, ime, visa, phase:0, days:0, worker:"MM",
+    rodjen:"—", pasos:"—", drz:"BiH", tel, email, otvoren:todayStr(),
+    docs:[],
+    msgs:[[LOGGED, todayStr()+" "+nowStr(), note||"Predmet otvoren."]],
+    hist:[[0,PHASES[0],todayStr(),null,WORKERS.MM.ime]] });
+  auditLog.push({id,txt:`Predmet kreiran — ${LOGGED}, ${todayStr()} ${nowStr()}.`});
+  setView("board");
+  openDossier(id);
+}
+
+// ---- Vraćanje u prethodnu fazu ---------------------------------------------
+function returnPhase(id){
+  const c=CASES.find(x=>x.id===id);
+  if(c.phase===0) return;
+  const leaving=PHASES[c.phase];
+  // ukloni zapis trenutne faze iz historije
+  for(let i=c.hist.length-1;i>=0;i--){ if(c.hist[i][0]===c.phase){ c.hist.splice(i,1); break; } }
+  c.phase--; c.done=false; c.days=0; c.worker=PHASE_WORKER[c.phase];
+  // ponovo otvori prethodnu fazu (vrati je u tok)
+  for(let i=c.hist.length-1;i>=0;i--){ if(c.hist[i][0]===c.phase){ c.hist[i][3]=null; c.hist[i][4]=WORKERS[c.worker].ime; break; } }
+  auditLog.push({id,txt:`Predmet vraćen iz faze „${leaving}" u „${PHASES[c.phase]}" — ${LOGGED}, ${todayStr()} ${nowStr()}.`});
+  if(view==="board") renderBoard();
+  openDossier(id);
+}
+
+// ---- helpers ---------------------------------------------------------------
+function parse(d){const[g,m,y]=d.split(".").map(Number);return new Date(y,m-1,g);}
+function durDays(a,b){return Math.max(0,Math.round((parse(b)-parse(a))/864e5));}
+function todayStr(){return "04.06.2026";}
+function nowStr(){return "23:10";}
+
+renderBoard();
+</script>
+</body>
+</html>
