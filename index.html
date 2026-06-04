@@ -58,8 +58,35 @@
   .bar .val{width:64px;text-align:right;color:var(--muted)}
   .wl{display:flex;align-items:center;gap:9px;padding:6px 0;font-size:13.5px;border-bottom:1px dashed var(--line)}
   .wl .who{margin-left:auto;font-weight:600;color:var(--brand)}
-  .latebox{display:flex;align-items:center;gap:9px;padding:7px 0;font-size:13.5px}
+  .latebox{display:flex;align-items:center;gap:9px;padding:8px 10px;font-size:13.5px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;background:#fffafa}
   .latebox .pill{margin-left:auto}
+  /* Dashboard */
+  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:16px}
+  .kpi{background:#fff;border:1px solid var(--line);border-radius:13px;padding:14px 15px;box-shadow:0 1px 3px rgba(20,50,60,.05)}
+  .kpi .ic{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;margin-bottom:9px;background:#eef2f3}
+  .kpi .ic.blue{background:#e6f2f3}.kpi .ic.green{background:#e7f6ee}.kpi .ic.amber{background:#fff4e5}
+  .kpi .big{font-size:27px;font-weight:800;line-height:1;color:var(--brand)}
+  .kpi .lab{font-size:11.5px;color:var(--muted);margin-top:5px;line-height:1.25}
+  .kpi.accent-red .big{color:var(--late)}.kpi.accent-red .ic{background:#fdecec}
+  .kpi.bottleneck{background:linear-gradient(135deg,#fff,#fff6ec);border-color:#f0d2a8}
+  .kpi.bottleneck .big{font-size:15px;color:var(--late);margin-top:3px}
+  .grid2{display:grid;grid-template-columns:1.15fr 1fr;gap:16px;margin-bottom:16px}
+  .donut-wrap{display:flex;align-items:center;gap:14px}
+  .legend{flex:1;font-size:13px}
+  .legend .li{display:flex;align-items:center;gap:8px;padding:4px 0}
+  .legend .dot{width:11px;height:11px;border-radius:3px;flex:0 0 auto}
+  .legend .lc{margin-left:auto;color:var(--muted);font-weight:600;white-space:nowrap}
+  .cols{display:flex;align-items:flex-end;gap:10px;height:185px;padding-top:6px}
+  .colbar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end}
+  .colbar .cnt{font-size:15px;font-weight:800;color:var(--brand);margin-bottom:5px}
+  .colbar .barv{width:100%;border-radius:7px 7px 0 0;min-height:4px;transform-origin:bottom;animation:growV .7s cubic-bezier(.2,.8,.2,1) both}
+  .colbar .clab{font-size:9.5px;color:var(--muted);text-align:center;margin-top:7px;line-height:1.15;height:30px;overflow:hidden}
+  @keyframes growV{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+  .bar .fill{transform-origin:left;animation:growH .7s cubic-bezier(.2,.8,.2,1) both}
+  @keyframes growH{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+  .donseg{animation:fadeSeg .6s ease both}
+  @keyframes fadeSeg{from{opacity:0}to{opacity:1}}
+  @media(max-width:860px){.kpis{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}}
   /* Dossier modal */
   .overlay{position:fixed;inset:0;background:rgba(10,25,30,.5);display:none;align-items:flex-start;justify-content:center;padding:28px 16px;overflow:auto;z-index:50}
   .overlay.open{display:flex}
@@ -167,6 +194,8 @@ const WORKERS = {
 // Podrazumijevani radnik po fazi (ko preuzima kad predmet uđe u fazu)
 const PHASE_WORKER = ["MM","ET","LS","DM","MT","NM"];
 const LOGGED = "Nela Marinković"; // trenutno prijavljeni korisnik (za audit)
+const PHASE_COLORS=["#1f6f86","#2487a0","#2f9fae","#3aa79f","#cf9b3c","#1f9d55"];
+const VISA_COLORS=["#15748a","#c2632f","#6a4fb1","#1f9d6b","#c79a3b","#2f6fb1","#b1442f"];
 function code(name){return Object.keys(WORKERS).find(k=>WORKERS[k].ime===name);}
 function av(c,small){const w=WORKERS[c];const s=small?'width:20px;height:20px;font-size:10px;':'';return `<span class="avatar" style="${s}background:${w.boja}" title="${w.ime} — ${w.uloga}">${c}</span>`;}
 
@@ -365,48 +394,80 @@ function renderBoard(){
 }
 
 // ---- Izvještaji ------------------------------------------------------------
+function donutSVG(segs,total){
+  const r=52,C=2*Math.PI*r;let off=0;
+  const arcs=segs.filter(s=>s.value>0).map(s=>{
+    const len=s.value/total*C;
+    const el=`<circle class="donseg" cx="70" cy="70" r="${r}" fill="none" stroke="${s.color}" stroke-width="20" stroke-linecap="butt" stroke-dasharray="${len.toFixed(2)} ${(C-len).toFixed(2)}" stroke-dashoffset="${(-off).toFixed(2)}" transform="rotate(-90 70 70)"/>`;
+    off+=len;return el;
+  }).join("");
+  return `<svg viewBox="0 0 140 140" width="150" height="150" style="flex:0 0 auto">${arcs}
+    <text x="70" y="66" text-anchor="middle" font-size="25" font-weight="800" fill="#16242a">${total}</text>
+    <text x="70" y="85" text-anchor="middle" font-size="10" fill="#65737a">predmeta</text></svg>`;
+}
+
 function renderReport(){
   const el=document.getElementById("view");
   const active=CASES.filter(c=>!c.done);
   const doneC=CASES.filter(c=>c.done);
-  // prosječno trajanje (otvoren → danas ili kraj)
   const totals=CASES.map(c=>durDays(c.otvoren, c.done?c.hist[c.hist.length-1][3]:todayStr()));
   const avgTotal=Math.round(totals.reduce((a,b)=>a+b,0)/totals.length);
-  // prosječno trajanje po fazi (iz završenih instanci faza)
   const perPhase=PHASES.map(()=>[]);
   CASES.forEach(c=>c.hist.forEach(h=>{ if(h[3]) perPhase[h[0]].push(durDays(h[2],h[3])); }));
   const phaseAvg=perPhase.map(a=>a.length?Math.round(a.reduce((x,y)=>x+y,0)/a.length*10)/10:0);
   const maxAvg=Math.max(...phaseAvg);
   const slowIdx=phaseAvg.indexOf(maxAvg);
-  // predmeti po radniku (aktivni)
   const load={}; active.forEach(c=>load[c.worker]=(load[c.worker]||0)+1);
-  // kašnjenja
+  const maxLoad=Math.max(1,...Object.values(load));
   const late=active.filter(c=>c.days>=5);
+  const phaseCount=PHASES.map((_,i)=>CASES.filter(c=>c.phase===i).length);
+  const maxCount=Math.max(1,...phaseCount);
+  const visaCounts={}; CASES.forEach(c=>visaCounts[c.visa]=(visaCounts[c.visa]||0)+1);
+  const visaSegs=Object.keys(visaCounts).sort((a,b)=>visaCounts[b]-visaCounts[a]).map((v,i)=>({label:v,value:visaCounts[v],color:VISA_COLORS[i%VISA_COLORS.length]}));
+
+  const kpis=`<div class="kpis">
+    <div class="kpi"><div class="ic blue">📂</div><div class="big">${active.length}</div><div class="lab">Aktivnih predmeta</div></div>
+    <div class="kpi"><div class="ic green">✅</div><div class="big">${doneC.length}</div><div class="lab">Završeno (ovaj mjesec)</div></div>
+    <div class="kpi"><div class="ic blue">⏱️</div><div class="big">${avgTotal}</div><div class="lab">Prosj. trajanje predmeta (dana)</div></div>
+    <div class="kpi accent-red"><div class="ic">⚠️</div><div class="big">${late.length}</div><div class="lab">Predmeta koji kasne</div></div>
+    <div class="kpi bottleneck"><div class="ic amber">🐢</div><div class="lab" style="font-weight:600">Usko grlo (najsporija faza)</div><div class="big">${PHASES[slowIdx]}</div><div class="lab">Ø ${maxAvg} dana po predmetu</div></div>
+  </div>`;
+
+  const colChart=PHASES.map((p,i)=>{
+    const h=Math.max(6,Math.round(phaseCount[i]/maxCount*135));
+    return `<div class="colbar"><div class="cnt">${phaseCount[i]}</div>
+      <div class="barv" style="height:${h}px;background:linear-gradient(180deg,${PHASE_COLORS[i]},${PHASE_COLORS[i]}bb)"></div>
+      <div class="clab">${p}</div></div>`;
+  }).join("");
+
+  const legend=visaSegs.map(s=>`<div class="li"><span class="dot" style="background:${s.color}"></span>${s.label}<span class="lc">${s.value} · ${Math.round(s.value/CASES.length*100)}%</span></div>`).join("");
 
   const bars=phaseAvg.map((v,i)=>`
     <div class="bar"><span class="blab">${PHASES[i]}</span>
       <span class="track"><span class="fill ${i===slowIdx?'max':''}" style="width:${maxAvg?Math.max(6,v/maxAvg*100):0}%"></span></span>
       <span class="val">${v} dana</span></div>`).join("");
+
   const loadRows=Object.keys(load).sort((a,b)=>load[b]-load[a]).map(k=>
-    `<div class="wl">${av(k,true)} ${WORKERS[k].ime} <span style="color:var(--muted);font-size:12px">· ${WORKERS[k].uloga}</span><span class="who">${load[k]} ${load[k]===1?'predmet':'predmeta'}</span></div>`).join("");
-  const lateRows=late.length?late.map(c=>
+    `<div class="bar"><span class="blab" style="width:auto;min-width:180px;display:flex;align-items:center;gap:8px">${av(k,true)} ${WORKERS[k].ime}</span>
+      <span class="track"><span class="fill" style="width:${Math.max(8,load[k]/maxLoad*100)}%"></span></span>
+      <span class="val">${load[k]} ${load[k]===1?'predmet':'predmeta'}</span></div>`).join("");
+
+  const lateRows=late.length?late.slice().sort((a,b)=>b.days-a.days).map(c=>
     `<div class="latebox">${av(c.worker,true)} <b>${c.ime}</b> <span style="color:var(--muted);font-size:12px">· ${PHASES[c.phase]} · zadužen/a: <b style="color:var(--brand)">${WORKERS[c.worker].ime}</b></span><span class="pill late">${c.days} dana</span></div>`).join("")
     :`<div style="color:var(--muted);font-size:13px">Nema predmeta koji kasne. 👍</div>`;
 
   el.innerHTML=`<div class="report">
-    <div class="stat-row">
-      <div class="stat"><div class="big">${active.length}</div><div class="lab">Aktivnih predmeta</div></div>
-      <div class="stat"><div class="big">${doneC.length}</div><div class="lab">Završeno (ovaj mjesec)</div></div>
-      <div class="stat"><div class="big">${avgTotal}</div><div class="lab">Prosj. trajanje predmeta (dana)</div></div>
-      <div class="stat"><div class="big" style="color:var(--late)">${late.length}</div><div class="lab">Predmeta koji kasne</div></div>
+    ${kpis}
+    <div class="grid2">
+      <div class="panel"><h3>Tok predmeta kroz faze (trenutno stanje)</h3><div class="cols">${colChart}</div></div>
+      <div class="panel"><h3>Raspodjela po tipu vize</h3><div class="donut-wrap">${donutSVG(visaSegs,CASES.length)}<div class="legend">${legend}</div></div></div>
     </div>
-    <div class="panel">
-      <h3>Prosječno trajanje po fazi — usko grlo: <span style="color:var(--late)">${PHASES[slowIdx]}</span></h3>
-      ${bars}
+    <div class="panel"><h3>Prosječno trajanje po fazi — usko grlo: <span style="color:var(--late)">${PHASES[slowIdx]}</span></h3>${bars}</div>
+    <div class="grid2">
+      <div class="panel"><h3>Opterećenje po radniku (aktivni predmeti)</h3>${loadRows}</div>
+      <div class="panel"><h3>Predmeti koji kasne (≥ 5 dana u fazi)</h3>${lateRows}</div>
     </div>
-    <div class="panel"><h3>Opterećenje po radniku (aktivni predmeti)</h3>${loadRows}</div>
-    <div class="panel"><h3>Predmeti koji kasne (≥ 5 dana u fazi)</h3>${lateRows}</div>
-    <p style="color:var(--muted);font-size:12px">* Brojke su izračunate iz demo podataka u realnom vremenu.</p>
+    <p style="color:var(--muted);font-size:12px">* Sve brojke se računaju iz podataka u realnom vremenu.</p>
   </div>`;
 }
 
