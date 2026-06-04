@@ -140,6 +140,15 @@
   .actions .note{font-size:12px;color:var(--muted)}
   .audit{font-size:11.5px;color:var(--muted)}
   .audit .row{padding:2px 0}
+  .atl{position:relative;padding-left:20px;margin-top:2px}
+  .atl::before{content:"";position:absolute;left:6px;top:5px;bottom:6px;width:2px;background:var(--line)}
+  .atl .ai{position:relative;padding:0 0 13px}
+  .atl .ai:last-child{padding-bottom:0}
+  .atl .ai::before{content:"";position:absolute;left:-17px;top:3px;width:11px;height:11px;border-radius:50%;background:currentColor;border:2px solid #fff;box-shadow:0 0 0 1.5px currentColor}
+  .atl .ai.open{color:#2f80ed}.atl .ai.handoff{color:var(--brand)}.atl .ai.done{color:var(--ok)}.atl .ai.comment{color:#8a93a0}.atl .ai.return{color:var(--warn)}
+  .atl .ad{font-size:10.5px;font-weight:700;color:#16242a;letter-spacing:.2px}
+  .atl .al{font-size:13px;color:#16242a;margin-top:1px;font-weight:550}
+  .atl .ae{font-size:11.5px;color:var(--muted);margin-top:1px}
   footer{padding:14px 20px;color:var(--muted);font-size:12px;text-align:center}
   @media(max-width:760px){.dbody{grid-template-columns:1fr}.dcol+.dcol{border-left:0;border-top:1px solid var(--line)}}
 </style>
@@ -548,19 +557,19 @@ function renderReport(){
 let auditLog=[];
 // Audit izveden iz stvarne historije faza (otvaranje + svako prosljeđivanje + završetak)
 function buildAudit(c){
-  const rows=[`Predmet otvoren — ${c.hist[0][4]}, ${c.hist[0][2]}`];
+  const ev=[{date:c.hist[0][2],who:c.hist[0][4],type:"open",label:"Predmet otvoren"}];
   for(let i=0;i<c.hist.length;i++){
     const h=c.hist[i];
     if(!h[3]) continue; // faza još u toku
     if(h[0]===PHASES.length-1){
-      rows.push(`Predmet završen (${PHASES[h[0]]}) — ${h[4]}, ${h[3]}`);
+      ev.push({date:h[3],who:h[4],type:"done",label:`Predmet završen — ${PHASES[h[0]]}`});
     } else {
       const next=c.hist[i+1];
       const nextWho=next?next[4]:WORKERS[PHASE_WORKER[h[0]+1]].ime;
-      rows.push(`Faza „${PHASES[h[0]]}" završena → proslijeđeno u „${PHASES[h[0]+1]}" (${nextWho}) — ${h[4]}, ${h[3]}`);
+      ev.push({date:h[3],who:h[4],type:"handoff",label:`Završena faza: ${PHASES[h[0]]}`,extra:`→ ${PHASES[h[0]+1]} · preuzima ${nextWho}`});
     }
   }
-  return rows;
+  return ev;
 }
 function openDossier(id){
   const c=CASES.find(x=>x.id===id);
@@ -571,8 +580,13 @@ function openDossier(id){
     const isCurr=h[3]===null; const dur=h[3]?durDays(h[2],h[3])+" dana":"u toku";
     return `<div class="item ${isCurr?'curr':'done'}"><div class="t">${h[1]}</div><div class="d">${h[2]} → ${h[3]||"…"} · ${dur} · ${h[4]}</div></div>`;
   }).join("");
-  const auditRows=[...buildAudit(c), ...auditLog.filter(a=>a.id===id).map(a=>a.txt)];
-  const auditHtml=auditRows.map(t=>`<div class="row">• ${t}</div>`).join("");
+  const AICON={open:"📂",handoff:"➡️",done:"✅",comment:"💬",return:"↩️"};
+  const events=[...buildAudit(c), ...auditLog.filter(a=>a.id===id)].sort((a,b)=>parse(a.date)-parse(b.date));
+  const auditHtml=events.map(e=>`<div class="ai ${e.type}">
+        <div class="ad">${e.date}${e.time?" · "+e.time:""}</div>
+        <div class="al">${AICON[e.type]||"•"} ${e.label}</div>
+        <div class="ae">${e.extra?e.extra+" · ":""}${e.who}</div>
+      </div>`).join("");
   const canHandoff=c.phase<PHASES.length-1 && !c.done;
   const nextW=canHandoff?WORKERS[PHASE_WORKER[c.phase+1]].ime:null;
   const nextPh=canHandoff?PHASES[c.phase+1]:null;
@@ -597,7 +611,7 @@ function openDossier(id){
           <div class="kv"><span class="k">Predmet otvoren</span><span class="v">${c.otvoren}</span></div>
         </div>
         <div class="sec"><h3>Dokumenti (${c.docs.length})</h3>${docsHtml}</div>
-        <div class="sec"><h3>Audit — izmjene</h3><div class="audit">${auditHtml}</div></div>
+        <div class="sec"><h3>Audit — izmjene</h3><div class="atl">${auditHtml}</div></div>
       </div>
       <div class="dcol">
         <div class="sec"><h3>Historija faza</h3><div class="tl">${histHtml}</div></div>
@@ -661,7 +675,6 @@ function createCase(){
     docs:[],
     msgs:[[LOGGED, todayStr()+" "+nowStr(), note||"Predmet otvoren."]],
     hist:[[0,PHASES[0],todayStr(),null,WORKERS.MM.ime]] });
-  auditLog.push({id,txt:`Predmet kreiran — ${LOGGED}, ${todayStr()} ${nowStr()}.`});
   setView("board");
   openDossier(id);
 }
@@ -676,7 +689,7 @@ function returnPhase(id){
   c.phase--; c.done=false; c.days=0; c.worker=PHASE_WORKER[c.phase];
   // ponovo otvori prethodnu fazu (vrati je u tok)
   for(let i=c.hist.length-1;i>=0;i--){ if(c.hist[i][0]===c.phase){ c.hist[i][3]=null; c.hist[i][4]=WORKERS[c.worker].ime; break; } }
-  auditLog.push({id,txt:`Predmet vraćen iz faze „${leaving}" u „${PHASES[c.phase]}" — ${LOGGED}, ${todayStr()} ${nowStr()}.`});
+  auditLog.push({id,date:todayStr(),time:nowStr(),who:LOGGED,type:"return",label:`Vraćeno u „${PHASES[c.phase]}"`,extra:`iz „${leaving}"`});
   if(view==="board") renderBoard();
   openDossier(id);
 }
@@ -688,7 +701,7 @@ function addComment(id){
   if(!txt) return;
   const c=CASES.find(x=>x.id===id);
   c.msgs.unshift([LOGGED, todayStr()+" "+nowStr(), txt]);   // najnoviji na vrh
-  auditLog.push({id,txt:`Dodat komentar — ${LOGGED}, ${todayStr()} ${nowStr()}.`});
+  auditLog.push({id,date:todayStr(),time:nowStr(),who:LOGGED,type:"comment",label:"Dodat komentar",extra:`„${txt.length>60?txt.slice(0,60)+"…":txt}"`});
   openDossier(id);  // osvježi dosije
 }
 
