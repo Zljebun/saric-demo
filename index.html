@@ -58,7 +58,8 @@
   .bar .val{width:64px;text-align:right;color:var(--muted)}
   .wl{display:flex;align-items:center;gap:9px;padding:6px 0;font-size:13.5px;border-bottom:1px dashed var(--line)}
   .wl .who{margin-left:auto;font-weight:600;color:var(--brand)}
-  .latebox{display:flex;align-items:center;gap:9px;padding:8px 10px;font-size:13.5px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;background:#fffafa}
+  .latebox{display:flex;align-items:center;gap:9px;padding:8px 10px;font-size:13.5px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;background:#fffafa;cursor:pointer;transition:.12s}
+  .latebox:hover{border-color:#e3a0a0;box-shadow:0 3px 10px rgba(120,30,30,.1);transform:translateY(-1px)}
   .latebox .pill{margin-left:auto}
   /* Dashboard */
   .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:16px}
@@ -524,7 +525,7 @@ function renderReport(){
   }).join("");
 
   const lateRows=late.length?late.slice().sort((a,b)=>b.days-a.days).map(c=>
-    `<div class="latebox">${av(c.worker,true)} <b>${c.ime}</b> <span style="color:var(--muted);font-size:12px">· ${PHASES[c.phase]} · zadužen/a: <b style="color:var(--brand)">${WORKERS[c.worker].ime}</b></span><span class="pill late">${c.days} dana</span></div>`).join("")
+    `<div class="latebox" onclick="openDossier('${c.id}')" title="Otvori dosije predmeta">${av(c.worker,true)} <b>${c.ime}</b> <span style="color:var(--muted);font-size:12px">· ${PHASES[c.phase]} · zadužen/a: <b style="color:var(--brand)">${WORKERS[c.worker].ime}</b></span><span class="pill late">${c.days} dana</span></div>`).join("")
     :`<div style="color:var(--muted);font-size:13px">Nema predmeta koji kasne. 👍</div>`;
 
   el.innerHTML=`<div class="report">
