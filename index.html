@@ -452,6 +452,20 @@ function renderReport(){
       <span class="track"><span class="fill" style="width:${Math.max(8,load[k]/maxLoad*100)}%"></span></span>
       <span class="val">${load[k]} ${load[k]===1?'predmet':'predmeta'}</span></div>`).join("");
 
+  // brzina rada po radniku: prosječno trajanje završenih faza koje je radnik obradio
+  const wTime={};
+  CASES.forEach(c=>c.hist.forEach(h=>{
+    if(h[3]){ const w=code(h[4]); if(w){ (wTime[w]=wTime[w]||{sum:0,n:0}); wTime[w].sum+=durDays(h[2],h[3]); wTime[w].n++; } }
+  }));
+  const wAvg=Object.keys(wTime).map(w=>({w,avg:Math.round(wTime[w].sum/wTime[w].n*10)/10,n:wTime[w].n}));
+  const maxW=Math.max(1,...wAvg.map(x=>x.avg)), minW=Math.min(...wAvg.map(x=>x.avg));
+  const speedRows=wAvg.sort((a,b)=>a.avg-b.avg).map(x=>{
+    const col=x.avg===minW?"#1f9d55":(x.avg===maxW?"#cc2f2f":"");
+    return `<div class="bar"><span class="blab" style="width:auto;min-width:180px;display:flex;align-items:center;gap:8px">${av(x.w,true)} ${WORKERS[x.w].ime}</span>
+      <span class="track"><span class="fill" style="width:${Math.max(8,x.avg/maxW*100)}%${col?`;background:${col}`:""}"></span></span>
+      <span class="val">${x.avg} dana · ${x.n} ${x.n===1?'faza':'faza'}</span></div>`;
+  }).join("");
+
   const lateRows=late.length?late.slice().sort((a,b)=>b.days-a.days).map(c=>
     `<div class="latebox">${av(c.worker,true)} <b>${c.ime}</b> <span style="color:var(--muted);font-size:12px">· ${PHASES[c.phase]} · zadužen/a: <b style="color:var(--brand)">${WORKERS[c.worker].ime}</b></span><span class="pill late">${c.days} dana</span></div>`).join("")
     :`<div style="color:var(--muted);font-size:13px">Nema predmeta koji kasne. 👍</div>`;
@@ -465,8 +479,9 @@ function renderReport(){
     <div class="panel"><h3>Prosječno trajanje po fazi — usko grlo: <span style="color:var(--late)">${PHASES[slowIdx]}</span></h3>${bars}</div>
     <div class="grid2">
       <div class="panel"><h3>Opterećenje po radniku (aktivni predmeti)</h3>${loadRows}</div>
-      <div class="panel"><h3>Predmeti koji kasne (≥ 5 dana u fazi)</h3>${lateRows}</div>
+      <div class="panel"><h3>Prosječna brzina rada po radniku <span style="color:var(--muted);font-weight:500;font-size:11px">(Ø dana po fazi — manje je brže)</span></h3>${speedRows}</div>
     </div>
+    <div class="panel"><h3>Predmeti koji kasne (≥ 5 dana u fazi)</h3>${lateRows}</div>
     <p style="color:var(--muted);font-size:12px">* Sve brojke se računaju iz podataka u realnom vremenu.</p>
   </div>`;
 }
