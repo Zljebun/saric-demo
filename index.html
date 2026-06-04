@@ -102,6 +102,11 @@
   .frow label{font-size:12px;color:var(--muted);font-weight:600}
   .frow input,.frow select{padding:9px 10px;border:1px solid var(--line);border-radius:8px;font-size:14px;font-family:inherit;background:#fff}
   .frow input:focus,.frow select:focus{outline:none;border-color:var(--brand2)}
+  .addcom{display:flex;gap:8px;margin-bottom:12px}
+  .addcom input{flex:1;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-size:13px;font-family:inherit}
+  .addcom input:focus{outline:none;border-color:var(--brand2)}
+  .addcom button{padding:8px 14px;font-size:13px;border:0;border-radius:8px;background:var(--action);color:#fff;font-weight:600;cursor:pointer}
+  .addcom button:hover{filter:brightness(1.08)}
   .actions .note{font-size:12px;color:var(--muted)}
   .audit{font-size:11.5px;color:var(--muted)}
   .audit .row{padding:2px 0}
@@ -445,7 +450,11 @@ function openDossier(id){
       </div>
       <div class="dcol">
         <div class="sec"><h3>Historija faza</h3><div class="tl">${histHtml}</div></div>
-        <div class="sec"><h3>Komunikacija i napomene</h3>${msgHtml}</div>
+        <div class="sec"><h3>Komunikacija i napomene</h3>
+          <div class="addcom">
+            <input id="c_new" placeholder="Dodaj komentar..." onkeydown="if(event.key==='Enter')addComment('${c.id}')">
+            <button onclick="addComment('${c.id}')">Dodaj</button>
+          </div>${msgHtml}</div>
       </div>
     </div>
     <div class="actions">
@@ -523,11 +532,22 @@ function returnPhase(id){
   openDossier(id);
 }
 
+// ---- Dodavanje komentara ---------------------------------------------------
+function addComment(id){
+  const inp=document.getElementById("c_new");
+  const txt=(inp.value||"").trim();
+  if(!txt) return;
+  const c=CASES.find(x=>x.id===id);
+  c.msgs.unshift([LOGGED, todayStr()+" "+nowStr(), txt]);   // najnoviji na vrh
+  auditLog.push({id,txt:`Dodat komentar — ${LOGGED}, ${todayStr()} ${nowStr()}.`});
+  openDossier(id);  // osvježi dosije
+}
+
 // ---- helpers ---------------------------------------------------------------
 function parse(d){const[g,m,y]=d.split(".").map(Number);return new Date(y,m-1,g);}
 function durDays(a,b){return Math.max(0,Math.round((parse(b)-parse(a))/864e5));}
 function todayStr(){return "04.06.2026";}
-function nowStr(){return "23:10";}
+function nowStr(){const d=new Date();return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");}
 
 renderBoard();
 </script>
