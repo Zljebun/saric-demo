@@ -406,6 +406,39 @@ function donutSVG(segs,total){
     <text x="70" y="85" text-anchor="middle" font-size="10" fill="#65737a">predmeta</text></svg>`;
 }
 
+// Scatter (kvadrant): X=opterećenje, Y=brzina (Ø dana/fazi). Gore=sporije, desno=pretrpaniji.
+function scatterSVG(pts){
+  if(pts.length<1) return "<div style='color:var(--muted);font-size:13px'>Nema dovoljno podataka.</div>";
+  const W=580,H=340,ml=54,mr=120,mt=22,mb=46,plotW=W-ml-mr,plotH=H-mt-mb;
+  const xMax=Math.max(2,...pts.map(p=>p.x))+1;
+  const yMax=Math.max(1,...pts.map(p=>p.y))*1.18;
+  const avgX=pts.reduce((a,p)=>a+p.x,0)/pts.length;
+  const avgY=pts.reduce((a,p)=>a+p.y,0)/pts.length;
+  const px=x=>ml+(x/xMax)*plotW, py=y=>mt+(1-y/yMax)*plotH;
+  const y0=py(0);
+  let yg="";
+  for(let i=0;i<=4;i++){const val=Math.round(yMax*i/4),Y=py(val);
+    yg+=`<line x1="${ml}" y1="${Y}" x2="${ml+plotW}" y2="${Y}" stroke="#eef2f3"/><line x1="${ml-4}" y1="${Y}" x2="${ml}" y2="${Y}" stroke="#9aa6aa"/><text x="${ml-8}" y="${Y+3}" text-anchor="end" font-size="9" fill="#65737a">${val}</text>`;}
+  let xg="";
+  for(let i=0;i<=xMax;i++){const X=px(i);
+    xg+=`<line x1="${X}" y1="${y0}" x2="${X}" y2="${y0+4}" stroke="#9aa6aa"/><text x="${X}" y="${y0+16}" text-anchor="middle" font-size="9" fill="#65737a">${i}</text>`;}
+  const vx=px(avgX),hy=py(avgY);
+  const quad=`<line x1="${vx}" y1="${mt}" x2="${vx}" y2="${mt+plotH}" stroke="#c5cfd2" stroke-dasharray="4 4"/><line x1="${ml}" y1="${hy}" x2="${ml+plotW}" y2="${hy}" stroke="#c5cfd2" stroke-dasharray="4 4"/>`;
+  const L=(x,y,a,t,c)=>`<text x="${x}" y="${y}" text-anchor="${a}" font-size="9.5" font-weight="700" fill="${c}" opacity="0.85">${t}</text>`;
+  const corners=L(ml+7,mt+13,"start","spor • rasterećen","#cc2f2f")+L(ml+plotW-7,mt+13,"end","spor • PRETRPAN","#d9822b")
+    +L(ml+7,mt+plotH-7,"start","brz • rasterećen","#1f9d55")+L(ml+plotW-7,mt+plotH-7,"end","brz • pod pritiskom","#1f9d6b");
+  const bub=pts.map(p=>{const cx=px(p.x),cy=py(p.y);
+    return `<g><circle cx="${cx}" cy="${cy}" r="15" fill="${WORKERS[p.w].boja}" opacity="0.9" stroke="#fff" stroke-width="2"><title>${WORKERS[p.w].ime} — ${WORKERS[p.w].uloga} · opterećenje: ${p.x} · brzina: Ø ${p.y} dana/fazi (${p.n} faza)</title></circle><text x="${cx}" y="${cy+4}" text-anchor="middle" font-size="10" font-weight="700" fill="#fff" pointer-events="none">${p.w}</text></g>`;}).join("");
+  let leg="";
+  pts.forEach((p,i)=>{const ly=mt+12+i*18;leg+=`<circle cx="${ml+plotW+20}" cy="${ly-4}" r="6" fill="${WORKERS[p.w].boja}"/><text x="${ml+plotW+30}" y="${ly}" font-size="9.5" fill="#16242a">${WORKERS[p.w].ime}</text>`;});
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px">
+    ${yg}${xg}${quad}${corners}
+    <line x1="${ml}" y1="${y0}" x2="${ml+plotW}" y2="${y0}" stroke="#9aa6aa"/><line x1="${ml}" y1="${mt}" x2="${ml}" y2="${y0}" stroke="#9aa6aa"/>
+    <text x="${ml+plotW/2}" y="${H-6}" text-anchor="middle" font-size="10" fill="#65737a">Opterećenje (aktivni predmeti) →</text>
+    <text transform="translate(13 ${mt+plotH/2}) rotate(-90)" text-anchor="middle" font-size="10" fill="#65737a">↑ Sporije  /  Brže ↓</text>
+    ${bub}${leg}</svg>`;
+}
+
 function renderReport(){
   const el=document.getElementById("view");
   const active=CASES.filter(c=>!c.done);
@@ -458,6 +491,7 @@ function renderReport(){
     if(h[3]){ const w=code(h[4]); if(w){ (wTime[w]=wTime[w]||{sum:0,n:0}); wTime[w].sum+=durDays(h[2],h[3]); wTime[w].n++; } }
   }));
   const wAvg=Object.keys(wTime).map(w=>({w,avg:Math.round(wTime[w].sum/wTime[w].n*10)/10,n:wTime[w].n}));
+  const scatterPts=wAvg.map(x=>({w:x.w,x:(load[x.w]||0),y:x.avg,n:x.n}));
   const maxW=Math.max(1,...wAvg.map(x=>x.avg)), minW=Math.min(...wAvg.map(x=>x.avg));
   const speedRows=wAvg.sort((a,b)=>a.avg-b.avg).map(x=>{
     const col=x.avg===minW?"#1f9d55":(x.avg===maxW?"#cc2f2f":"");
@@ -480,6 +514,10 @@ function renderReport(){
     <div class="grid2">
       <div class="panel"><h3>Opterećenje po radniku (aktivni predmeti)</h3>${loadRows}</div>
       <div class="panel"><h3>Prosječna brzina rada po radniku <span style="color:var(--muted);font-weight:500;font-size:11px">(Ø dana po fazi — manje je brže)</span></h3>${speedRows}</div>
+    </div>
+    <div class="panel"><h3>Dijagnostika: brzina vs opterećenje po radniku</h3>
+      <div style="overflow-x:auto">${scatterSVG(scatterPts)}</div>
+      <p style="color:var(--muted);font-size:12px;margin:6px 0 0">Svaki krug je radnik. <b>Desno</b> = veće opterećenje, <b>gore</b> = sporiji. Gornji-desni kvadrant = spor <b>jer je pretrpan</b>; gornji-lijevi = spor <b>iako rasterećen</b> (stvarno spor).</p>
     </div>
     <div class="panel"><h3>Predmeti koji kasne (≥ 5 dana u fazi)</h3>${lateRows}</div>
     <p style="color:var(--muted);font-size:12px">* Sve brojke se računaju iz podataka u realnom vremenu.</p>
