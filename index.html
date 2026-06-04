@@ -526,6 +526,22 @@ function renderReport(){
 
 // ---- Dosije ----------------------------------------------------------------
 let auditLog=[];
+// Audit izveden iz stvarne historije faza (otvaranje + svako prosljeđivanje + završetak)
+function buildAudit(c){
+  const rows=[`Predmet otvoren — ${c.hist[0][4]}, ${c.hist[0][2]}`];
+  for(let i=0;i<c.hist.length;i++){
+    const h=c.hist[i];
+    if(!h[3]) continue; // faza još u toku
+    if(h[0]===PHASES.length-1){
+      rows.push(`Predmet završen (${PHASES[h[0]]}) — ${h[4]}, ${h[3]}`);
+    } else {
+      const next=c.hist[i+1];
+      const nextWho=next?next[4]:WORKERS[PHASE_WORKER[h[0]+1]].ime;
+      rows.push(`Faza „${PHASES[h[0]]}" završena → proslijeđeno u „${PHASES[h[0]+1]}" (${nextWho}) — ${h[4]}, ${h[3]}`);
+    }
+  }
+  return rows;
+}
 function openDossier(id){
   const c=CASES.find(x=>x.id===id);
   const totalStart=c.hist[0][2];
@@ -535,7 +551,8 @@ function openDossier(id){
     const isCurr=h[3]===null; const dur=h[3]?durDays(h[2],h[3])+" dana":"u toku";
     return `<div class="item ${isCurr?'curr':'done'}"><div class="t">${h[1]}</div><div class="d">${h[2]} → ${h[3]||"…"} · ${dur} · ${h[4]}</div></div>`;
   }).join("");
-  const auditHtml=auditLog.filter(a=>a.id===id).map(a=>`<div class="row">• ${a.txt}</div>`).join("")||`<div class="row">• Predmet otvoren ${c.otvoren} (Marija Mudrinić)</div>`;
+  const auditRows=[...buildAudit(c), ...auditLog.filter(a=>a.id===id).map(a=>a.txt)];
+  const auditHtml=auditRows.map(t=>`<div class="row">• ${t}</div>`).join("");
   const canHandoff=c.phase<PHASES.length-1 && !c.done;
   const nextW=canHandoff?WORKERS[PHASE_WORKER[c.phase+1]].ime:null;
   const nextPh=canHandoff?PHASES[c.phase+1]:null;
@@ -582,12 +599,10 @@ function openDossier(id){
 }
 function handoff(id){
   const c=CASES.find(x=>x.id===id);
-  const finished=PHASES[c.phase]; const finishedBy=WORKERS[c.worker].ime;
   const h=c.hist.find(x=>x[3]===null); if(h) h[3]=todayStr();
   c.phase++; c.days=0; c.worker=PHASE_WORKER[c.phase];
   c.hist.push([c.phase,PHASES[c.phase],todayStr(),(c.phase===PHASES.length-1?todayStr():null),WORKERS[c.worker].ime]);
   if(c.phase===PHASES.length-1) c.done=true;
-  auditLog.push({id,txt:`Faza „${finished}" označena gotovom — ${finishedBy}, ${todayStr()} ${nowStr()}. Proslijeđeno: ${WORKERS[c.worker].ime}.`});
   if(view==="board") renderBoard();
   openDossier(id);
 }
