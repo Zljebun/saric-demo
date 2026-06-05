@@ -674,7 +674,7 @@ function handoff(id){
   if(view==="board") renderBoard();
   openDossier(id);
 }
-function closeDossier(){document.getElementById("overlay").classList.remove("open");}
+function closeDossier(){maxOpen=false;document.getElementById("dossier").classList.remove("max");document.getElementById("overlay").classList.remove("open");}
 function toggleAudit(h){
   const atl=h.parentElement.querySelector(".atl");
   const open=atl.style.display!=="none";
