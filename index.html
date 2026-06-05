@@ -159,6 +159,9 @@
   .atl .ad{font-size:10.5px;font-weight:700;color:#16242a;letter-spacing:.2px}
   .atl .al{font-size:13px;color:#16242a;margin-top:1px;font-weight:550}
   .atl .ae{font-size:11.5px;color:var(--muted);margin-top:1px}
+  .collapser{cursor:pointer;user-select:none;display:flex;align-items:center;gap:7px}
+  .collapser:hover{color:var(--brand2)}
+  .chev{font-size:10px;color:var(--muted);transition:.15s}
   footer{padding:14px 20px;color:var(--muted);font-size:12px;text-align:center}
   @media(max-width:760px){.dbody{grid-template-columns:1fr}.dcol+.dcol{border-left:0;border-top:1px solid var(--line)}}
 </style>
@@ -631,7 +634,7 @@ function openDossier(id){
         </div>
       </div>
       <div class="dcol">
-        <div class="sec"><h3>Audit — izmjene</h3><div class="atl">${auditHtml}</div></div>
+        <div class="sec"><h3 class="collapser" onclick="toggleAudit(this)"><span class="chev">▸</span> Audit — izmjene <span style="color:var(--muted);font-weight:500;font-size:11px">(${events.length})</span></h3><div class="atl" style="display:none">${auditHtml}</div></div>
         <div class="sec"><h3>Komunikacija i napomene</h3>
           <div class="addcom">
             <input id="c_new" placeholder="Dodaj komentar..." onkeydown="if(event.key==='Enter')addComment('${c.id}')">
@@ -658,6 +661,12 @@ function handoff(id){
   openDossier(id);
 }
 function closeDossier(){document.getElementById("overlay").classList.remove("open");}
+function toggleAudit(h){
+  const atl=h.parentElement.querySelector(".atl");
+  const open=atl.style.display!=="none";
+  atl.style.display=open?"none":"block";
+  h.querySelector(".chev").textContent=open?"▸":"▾";
+}
 
 // ---- Novi predmet ----------------------------------------------------------
 const VISA_TIPOVI=["Radna viza","Spajanje porodice","Studentska viza","Priznavanje kvalifikacija","Produženje vize","Studije u Sloveniji","Državljanstvo"];
