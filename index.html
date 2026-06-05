@@ -107,7 +107,9 @@
   .kv .v{font-weight:550}
   .doc{display:flex;align-items:center;gap:9px;padding:7px 9px;border:1px solid var(--line);border-radius:8px;margin-bottom:6px;font-size:13px}
   .doc .ext{font-size:10px;font-weight:700;color:#fff;padding:3px 6px;border-radius:4px}
-  .ext.pdf{background:#cc2f2f}.ext.jpg,.ext.jpeg{background:#2f80ed}.ext.xlsx{background:#1f9d55}
+  .ext.pdf{background:#cc2f2f}.ext.jpg,.ext.jpeg{background:#2f80ed}.ext.xlsx,.ext.xls{background:#1f9d55}
+  .docbtn{margin-top:8px;width:100%;background:#fff;border:1px dashed #b9c6cc;color:var(--brand);padding:9px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer}
+  .docbtn:hover{background:#eef4f5;border-color:var(--brand)}
   .doc .dmeta{margin-left:auto;color:var(--muted);font-size:11.5px;text-align:right}
   .tl{position:relative;padding-left:18px}
   .tl::before{content:"";position:absolute;left:5px;top:3px;bottom:3px;width:2px;background:var(--line)}
@@ -592,7 +594,7 @@ function openDossier(id){
     const isCurr=h[3]===null; const dur=h[3]?durDays(h[2],h[3])+" dana":"u toku";
     return `<div class="item ${isCurr?'curr':'done'}"><div class="t">${h[1]}</div><div class="d">${h[2]} → ${h[3]||"…"} · ${dur} · ${h[4]}</div></div>`;
   }).join("");
-  const AICON={open:"📂",handoff:"➡️",done:"✅",comment:"💬",return:"↩️"};
+  const AICON={open:"📂",handoff:"➡️",done:"✅",comment:"💬",return:"↩️",doc:"📎"};
   const events=[...buildAudit(c), ...auditLog.filter(a=>a.id===id)].sort((a,b)=>parse(a.date)-parse(b.date));
   const auditHtml=events.map(e=>`<div class="ai ${e.type}">
         <div class="ad">${e.date}${e.time?" · "+e.time:""}</div>
@@ -622,7 +624,10 @@ function openDossier(id){
           <div class="kv"><span class="k">E-mail</span><span class="v">${c.email}</span></div>
           <div class="kv"><span class="k">Predmet otvoren</span><span class="v">${c.otvoren}</span></div>
         </div>
-        <div class="sec"><h3>Dokumenti (${c.docs.length})</h3>${docsHtml}</div>
+        <div class="sec"><h3>Dokumenti (${c.docs.length})</h3>${docsHtml}
+          <input type="file" id="d_file" accept=".pdf,.jpg,.jpeg,.xlsx,.xls" style="display:none" onchange="addDoc('${c.id}',this)">
+          <button class="docbtn" onclick="document.getElementById('d_file').click()">📎 Dodaj dokument</button>
+        </div>
       </div>
       <div class="dcol">
         <div class="sec"><h3>Audit — izmjene</h3><div class="atl">${auditHtml}</div></div>
@@ -714,6 +719,21 @@ function addComment(id){
   c.msgs.unshift([LOGGED, todayStr()+" "+nowStr(), txt]);   // najnoviji na vrh
   auditLog.push({id,date:todayStr(),time:nowStr(),who:LOGGED,type:"comment",label:"Dodat komentar",extra:`„${txt.length>60?txt.slice(0,60)+"…":txt}"`});
   openDossier(id);  // osvježi dosije
+}
+
+// ---- Dodavanje dokumenta ---------------------------------------------------
+function addDoc(id,input){
+  const f=input.files&&input.files[0]; if(!f) return;
+  const ext=(f.name.split(".").pop()||"").toLowerCase();
+  if(!["pdf","jpg","jpeg","xlsx","xls"].includes(ext)){
+    alert("Podržani formati: PDF, JPG, JPEG, Excel (xlsx/xls)."); input.value=""; return;
+  }
+  const name=f.name.replace(/\.[^.]+$/,"");
+  const c=CASES.find(x=>x.id===id);
+  c.docs.push([name,ext,todayStr(),LOGGED]);
+  auditLog.push({id,date:todayStr(),time:nowStr(),who:LOGGED,type:"doc",label:"Dodat dokument",extra:`${name}.${ext}`});
+  input.value="";
+  openDossier(id);
 }
 
 // ---- helpers ---------------------------------------------------------------
