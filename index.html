@@ -611,10 +611,9 @@ function openDossier(id){
           <div class="kv"><span class="k">Predmet otvoren</span><span class="v">${c.otvoren}</span></div>
         </div>
         <div class="sec"><h3>Dokumenti (${c.docs.length})</h3>${docsHtml}</div>
-        <div class="sec"><h3>Audit — izmjene</h3><div class="atl">${auditHtml}</div></div>
       </div>
       <div class="dcol">
-        <div class="sec"><h3>Historija faza</h3><div class="tl">${histHtml}</div></div>
+        <div class="sec"><h3>Audit — izmjene</h3><div class="atl">${auditHtml}</div></div>
         <div class="sec"><h3>Komunikacija i napomene</h3>
           <div class="addcom">
             <input id="c_new" placeholder="Dodaj komentar..." onkeydown="if(event.key==='Enter')addComment('${c.id}')">
