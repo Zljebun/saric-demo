@@ -92,6 +92,12 @@
   .overlay{position:fixed;inset:0;background:rgba(10,25,30,.5);display:none;align-items:flex-start;justify-content:center;padding:28px 16px;overflow:auto;z-index:50}
   .overlay.open{display:flex}
   .dossier{background:#fff;border-radius:14px;max-width:930px;width:100%;box-shadow:0 20px 60px rgba(5,20,25,.35);overflow:hidden}
+  .dossier.max{max-width:none;width:96vw;height:92vh;display:flex;flex-direction:column}
+  .dossier.max .dbody{flex:1;overflow:auto}
+  .dossier.max .dhead,.dossier.max .actions{flex:0 0 auto}
+  .dh-actions{margin-left:auto;display:flex;align-items:center;gap:13px}
+  .mx{cursor:pointer;font-size:17px;opacity:.85;line-height:1;user-select:none}
+  .mx:hover{opacity:1}
   .dhead{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;padding:18px 22px;display:flex;align-items:flex-start;gap:14px}
   .dhead .x{margin-left:auto;cursor:pointer;font-size:22px;opacity:.85;line-height:1}
   .dhead h2{margin:0;font-size:20px}
@@ -473,6 +479,7 @@ function computeScatterPts(){
 }
 // Modal: analiza rada (scatter u punom prostoru)
 function openAnalysis(){
+  maxOpen=false; document.getElementById("dossier").classList.remove("max");
   const pts=computeScatterPts();
   document.getElementById("dossier").innerHTML=`
     <div class="dhead"><div><h2>Analiza rada — brzina vs opterećenje</h2>
@@ -567,6 +574,12 @@ function renderReport(){
 
 // ---- Dosije ----------------------------------------------------------------
 let auditLog=[];
+let maxOpen=false;
+function toggleMax(el){
+  maxOpen=!maxOpen;
+  document.getElementById("dossier").classList.toggle("max",maxOpen);
+  el.textContent=maxOpen?"⤡":"⤢";
+}
 // Audit izveden iz stvarne historije faza (otvaranje + svako prosljeđivanje + završetak)
 function buildAudit(c){
   const ev=[{date:c.hist[0][2],who:c.hist[0][4],type:"open",label:"Predmet otvoren"}];
@@ -616,7 +629,7 @@ function openDossier(id){
         <span class="tag">Faza: ${PHASES[c.phase]}</span>
         <span class="tag">Zadužen/a: ${WORKERS[c.worker].ime}</span>
         <span class="tag">Otvoren: ${durDays(totalStart, c.done?c.hist[c.hist.length-1][3]:todayStr())} dana</span></div>
-      </div><div class="x" onclick="closeDossier()">×</div>
+      </div><div class="dh-actions"><span class="mx" onclick="toggleMax(this)" title="Uvećaj / smanji">${maxOpen?"⤡":"⤢"}</span><div class="x" onclick="closeDossier()">×</div></div>
     </div>
     <div class="dbody">
       <div class="dcol">
@@ -649,6 +662,7 @@ function openDossier(id){
            <span class="note">→ ${nextPh} · preuzima <b>${nextW}</b></span>`
         : `<span class="note">${c.done?'Predmet je završen.':'Posljednja faza.'}</span>`}
     </div>`;
+  document.getElementById("dossier").classList.toggle("max",maxOpen);
   document.getElementById("overlay").classList.add("open");
 }
 function handoff(id){
@@ -671,6 +685,7 @@ function toggleAudit(h){
 // ---- Novi predmet ----------------------------------------------------------
 const VISA_TIPOVI=["Radna viza","Spajanje porodice","Studentska viza","Priznavanje kvalifikacija","Produženje vize","Studije u Sloveniji","Državljanstvo"];
 function openNewCase(){
+  maxOpen=false; document.getElementById("dossier").classList.remove("max");
   document.getElementById("dossier").innerHTML=`
     <div class="dhead"><div><h2>Novi predmet</h2>
       <div class="tags"><span class="tag">Ulazi u fazu: ${PHASES[0]}</span><span class="tag">Preuzima: ${WORKERS.MM.ime}</span></div>
