@@ -582,16 +582,19 @@ function toggleMax(el){
 }
 // Audit izveden iz stvarne historije faza (otvaranje + svako prosljeđivanje + završetak)
 function buildAudit(c){
-  const ev=[{date:c.hist[0][2],who:c.hist[0][4],type:"open",label:"Predmet otvoren"}];
+  const sp=s=>{const i=s.indexOf(" ");return i<0?[s,""]:[s.slice(0,i),s.slice(i+1)];};
+  const[od,ot]=sp(c.hist[0][2]);
+  const ev=[{date:od,time:ot,who:c.hist[0][4],type:"open",label:"Predmet otvoren"}];
   for(let i=0;i<c.hist.length;i++){
     const h=c.hist[i];
     if(!h[3]) continue; // faza još u toku
+    const[hd,ht]=sp(h[3]);
     if(h[0]===PHASES.length-1){
-      ev.push({date:h[3],who:h[4],type:"done",label:`Predmet završen — ${PHASES[h[0]]}`});
+      ev.push({date:hd,time:ht,who:h[4],type:"done",label:`Predmet završen — ${PHASES[h[0]]}`});
     } else {
       const next=c.hist[i+1];
       const nextWho=next?next[4]:WORKERS[PHASE_WORKER[h[0]+1]].ime;
-      ev.push({date:h[3],who:h[4],type:"handoff",label:`Završena faza: ${PHASES[h[0]]}`,extra:`→ ${PHASES[h[0]+1]} · preuzima ${nextWho}`});
+      ev.push({date:hd,time:ht,who:h[4],type:"handoff",label:`Završena faza: ${PHASES[h[0]]}`,extra:`→ ${PHASES[h[0]+1]} · preuzima ${nextWho}`});
     }
   }
   return ev;
@@ -667,9 +670,9 @@ function openDossier(id){
 }
 function handoff(id){
   const c=CASES.find(x=>x.id===id);
-  const h=c.hist.find(x=>x[3]===null); if(h) h[3]=todayStr();
+  const h=c.hist.find(x=>x[3]===null); if(h) h[3]=stamp();
   c.phase++; c.days=0; c.worker=PHASE_WORKER[c.phase];
-  c.hist.push([c.phase,PHASES[c.phase],todayStr(),(c.phase===PHASES.length-1?todayStr():null),WORKERS[c.worker].ime]);
+  c.hist.push([c.phase,PHASES[c.phase],stamp(),(c.phase===PHASES.length-1?stamp():null),WORKERS[c.worker].ime]);
   if(c.phase===PHASES.length-1) c.done=true;
   if(view==="board") renderBoard();
   openDossier(id);
@@ -712,10 +715,10 @@ function createCase(){
   const nextNum=Math.max(...CASES.map(c=>+c.id.split("-")[1]))+1;
   const id="P-"+nextNum;
   CASES.push({ id, ime, visa, phase:0, days:0, worker:"MM",
-    rodjen:"—", pasos:"—", drz:"BiH", tel, email, otvoren:todayStr(),
+    rodjen:"—", pasos:"—", drz:"BiH", tel, email, otvoren:stamp(),
     docs:[],
-    msgs:[[LOGGED, todayStr()+" "+nowStr(), note||"Predmet otvoren."]],
-    hist:[[0,PHASES[0],todayStr(),null,WORKERS.MM.ime]] });
+    msgs:[[LOGGED, stamp(), note||"Predmet otvoren."]],
+    hist:[[0,PHASES[0],stamp(),null,WORKERS.MM.ime]] });
   setView("board");
   openDossier(id);
 }
@@ -755,17 +758,18 @@ function addDoc(id,input){
   }
   const name=f.name.replace(/\.[^.]+$/,"");
   const c=CASES.find(x=>x.id===id);
-  c.docs.push([name,ext,todayStr(),LOGGED]);
+  c.docs.push([name,ext,stamp(),LOGGED]);
   auditLog.push({id,date:todayStr(),time:nowStr(),who:LOGGED,type:"doc",label:"Dodat dokument",extra:`${name}.${ext}`});
   input.value="";
   openDossier(id);
 }
 
 // ---- helpers ---------------------------------------------------------------
-function parse(d){const[g,m,y]=d.split(".").map(Number);return new Date(y,m-1,g);}
+function parse(d){const[g,m,y]=d.split(" ")[0].split(".").map(Number);return new Date(y,m-1,g);} // ignoriše eventualno vrijeme
 function durDays(a,b){return Math.max(0,Math.round((parse(b)-parse(a))/864e5));}
-function todayStr(){return "04.06.2026";}
+function todayStr(){const d=new Date();return String(d.getDate()).padStart(2,"0")+"."+String(d.getMonth()+1).padStart(2,"0")+"."+d.getFullYear();}
 function nowStr(){const d=new Date();return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");}
+function stamp(){return todayStr()+" "+nowStr();} // datum + tačno vrijeme za žive akcije
 
 renderBoard();
 </script>
