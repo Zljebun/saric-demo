@@ -149,7 +149,8 @@
   .actions .note{font-size:12px;color:var(--muted)}
   .audit{font-size:11.5px;color:var(--muted)}
   .audit .row{padding:2px 0}
-  .atl{position:relative;padding-left:20px;margin-top:2px}
+  .atl{position:relative;padding-left:20px;margin-top:2px;max-height:300px;overflow-y:auto;padding-right:4px}
+  .atl::-webkit-scrollbar{width:7px}.atl::-webkit-scrollbar-thumb{background:#cfd8de;border-radius:4px}
   .atl::before{content:"";position:absolute;left:6px;top:5px;bottom:6px;width:2px;background:var(--line)}
   .atl .ai{position:relative;padding:0 0 13px}
   .atl .ai:last-child{padding-bottom:0}
