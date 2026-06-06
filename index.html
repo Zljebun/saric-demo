@@ -78,7 +78,9 @@
   .legend .dot{width:11px;height:11px;border-radius:3px;flex:0 0 auto}
   .legend .lc{margin-left:auto;color:var(--muted);font-weight:600;white-space:nowrap}
   .cols{display:flex;align-items:flex-end;gap:10px;height:185px;padding-top:6px}
-  .colbar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end}
+  .colbar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;cursor:pointer}
+  .colbar:hover .barv{filter:brightness(1.13);box-shadow:0 0 0 2px rgba(31,111,134,.3)}
+  .colbar:hover .cnt{text-decoration:underline}
   .colbar .cnt{font-size:15px;font-weight:800;color:var(--brand);margin-bottom:5px}
   .colbar .barv{width:100%;border-radius:7px 7px 0 0;min-height:4px;transform-origin:bottom;animation:growV .7s cubic-bezier(.2,.8,.2,1) both}
   .colbar .clab{font-size:9.5px;color:var(--muted);text-align:center;margin-top:7px;line-height:1.15;height:30px;overflow:hidden}
@@ -499,6 +501,22 @@ function openAnalysis(){
   document.getElementById("overlay").classList.add("open");
 }
 
+// Modal: spisak predmeta u odabranoj fazi (iz kolonskog grafikona)
+function openPhaseList(idx){
+  maxOpen=false; document.getElementById("dossier").classList.remove("max");
+  const list=CASES.filter(c=>c.phase===idx);
+  const rows=list.length?list.map(c=>{
+    const badge=c.done?`<span class="pill done">završeno</span>`:`<span class="pill ${c.days>=5?'late':'days'}">${c.days} ${c.days===1?'dan':'dana'} u fazi</span>`;
+    return `<div class="latebox" style="background:#fff" onclick="openDossier('${c.id}')" title="Otvori dosije predmeta">${av(c.worker,true)} <b>${c.ime}</b> <span style="color:var(--muted);font-size:12px">· ${c.visa} · ${c.id} · ${WORKERS[c.worker].ime}</span>${badge}</div>`;
+  }).join("") : `<div style="color:var(--muted);font-size:13px">Nema predmeta u ovoj fazi.</div>`;
+  document.getElementById("dossier").innerHTML=`
+    <div class="dhead"><div><h2>${PHASES[idx]}</h2>
+      <div class="tags"><span class="tag">${list.length} ${list.length===1?'predmet':'predmeta'}</span></div></div>
+      <div class="x" onclick="closeDossier()">×</div></div>
+    <div style="padding:16px 22px;max-height:70vh;overflow:auto">${rows}</div>`;
+  document.getElementById("overlay").classList.add("open");
+}
+
 function renderReport(){
   const el=document.getElementById("view");
   const active=CASES.filter(c=>!c.done);
@@ -528,7 +546,7 @@ function renderReport(){
 
   const colChart=PHASES.map((p,i)=>{
     const h=Math.max(6,Math.round(phaseCount[i]/maxCount*135));
-    return `<div class="colbar"><div class="cnt">${phaseCount[i]}</div>
+    return `<div class="colbar" onclick="openPhaseList(${i})" title="Prikaži predmete u ovoj fazi"><div class="cnt">${phaseCount[i]}</div>
       <div class="barv" style="height:${h}px;background:linear-gradient(180deg,${PHASE_COLORS[i]},${PHASE_COLORS[i]}bb)"></div>
       <div class="clab">${p}</div></div>`;
   }).join("");
