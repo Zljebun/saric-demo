@@ -422,7 +422,7 @@ function renderBoard(){
       const late=c.days>=5 && !c.done;
       const daysPill=c.done?`<span class="pill done">završeno</span>`
         :`<span class="pill ${late?'late':'days'}">${c.days} ${c.days===1?'dan':'dana'} u fazi</span>`;
-      const card=document.createElement("div"); card.className="pcard"; card.onclick=()=>openDossier(c.id);
+      const card=document.createElement("div"); card.className="pcard"; card.onclick=()=>{dossierBack=null;openDossier(c.id);};
       card.innerHTML=`<div class="nm">${c.ime}</div><div class="visa">${c.visa} · ${c.id}</div>
         <div class="meta">${daysPill}<span class="who">${av(c.worker,true)}</span></div>`;
       cards.appendChild(card);
@@ -507,7 +507,7 @@ function openPhaseList(idx){
   const list=CASES.filter(c=>c.phase===idx);
   const rows=list.length?list.map(c=>{
     const badge=c.done?`<span class="pill done">završeno</span>`:`<span class="pill ${c.days>=5?'late':'days'}">${c.days} ${c.days===1?'dan':'dana'} u fazi</span>`;
-    return `<div class="latebox" style="background:#fff" onclick="openDossier('${c.id}')" title="Otvori dosije predmeta">${av(c.worker,true)} <b>${c.ime}</b> <span style="color:var(--muted);font-size:12px">· ${c.visa} · ${c.id} · ${WORKERS[c.worker].ime}</span>${badge}</div>`;
+    return `<div class="latebox" style="background:#fff" onclick="dossierBack=${idx};openDossier('${c.id}')" title="Otvori dosije predmeta">${av(c.worker,true)} <b>${c.ime}</b> <span style="color:var(--muted);font-size:12px">· ${c.visa} · ${c.id} · ${WORKERS[c.worker].ime}</span>${badge}</div>`;
   }).join("") : `<div style="color:var(--muted);font-size:13px">Nema predmeta u ovoj fazi.</div>`;
   document.getElementById("dossier").innerHTML=`
     <div class="dhead"><div><h2>${PHASES[idx]}</h2>
@@ -578,7 +578,7 @@ function renderReport(){
   }).join("");
 
   const lateRows=late.length?late.slice().sort((a,b)=>b.days-a.days).map(c=>
-    `<div class="latebox" onclick="openDossier('${c.id}')" title="Otvori dosije predmeta">${av(c.worker,true)} <b>${c.ime}</b> <span style="color:var(--muted);font-size:12px">· ${PHASES[c.phase]} · zadužen/a: <b style="color:var(--brand)">${WORKERS[c.worker].ime}</b></span><span class="pill late">${c.days} dana</span></div>`).join("")
+    `<div class="latebox" onclick="dossierBack=null;openDossier('${c.id}')" title="Otvori dosije predmeta">${av(c.worker,true)} <b>${c.ime}</b> <span style="color:var(--muted);font-size:12px">· ${PHASES[c.phase]} · zadužen/a: <b style="color:var(--brand)">${WORKERS[c.worker].ime}</b></span><span class="pill late">${c.days} dana</span></div>`).join("")
     :`<div style="color:var(--muted);font-size:13px">Nema predmeta koji kasne. 👍</div>`;
 
   el.innerHTML=`<div class="report">
@@ -604,6 +604,11 @@ function toggleMax(el){
   maxOpen=!maxOpen;
   document.getElementById("dossier").classList.toggle("max",maxOpen);
   el.textContent=maxOpen?"⤡":"⤢";
+}
+let dossierBack=null; // ako je predmet otvoren iz spiska faze, čuva indeks faze za "nazad"
+function closeOrBack(){
+  if(dossierBack!=null){ const i=dossierBack; dossierBack=null; openPhaseList(i); }
+  else closeDossier();
 }
 // Audit izveden iz stvarne historije faza (otvaranje + svako prosljeđivanje + završetak)
 function buildAudit(c){
@@ -657,7 +662,7 @@ function openDossier(id){
         <span class="tag">Faza: ${PHASES[c.phase]}</span>
         <span class="tag">Zadužen/a: ${WORKERS[c.worker].ime}</span>
         <span class="tag">Otvoren: ${durDays(totalStart, c.done?c.hist[c.hist.length-1][3]:todayStr())} dana</span></div>
-      </div><div class="dh-actions"><span class="mx" onclick="toggleMax(this)" title="Uvećaj / smanji">${maxOpen?"⤡":"⤢"}</span><div class="x" onclick="closeDossier()">×</div></div>
+      </div><div class="dh-actions"><span class="mx" onclick="toggleMax(this)" title="Uvećaj / smanji">${maxOpen?"⤡":"⤢"}</span><div class="x" onclick="closeOrBack()">×</div></div>
     </div>
     <div class="dbody">
       <div class="dcol">
@@ -702,7 +707,7 @@ function handoff(id){
   if(view==="board") renderBoard();
   openDossier(id);
 }
-function closeDossier(){maxOpen=false;document.getElementById("dossier").classList.remove("max");document.getElementById("overlay").classList.remove("open");}
+function closeDossier(){maxOpen=false;dossierBack=null;document.getElementById("dossier").classList.remove("max");document.getElementById("overlay").classList.remove("open");}
 function toggleAudit(h){
   const atl=h.parentElement.querySelector(".atl");
   const open=atl.style.display!=="none";
