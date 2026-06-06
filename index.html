@@ -25,7 +25,7 @@
   .toolbar{display:flex;align-items:center;gap:6px;padding:0 20px;border-bottom:1px solid var(--line);background:#fff}
   .tab{padding:14px 14px 12px;font-size:14px;font-weight:600;color:var(--muted);border-bottom:3px solid transparent;cursor:pointer}
   .tab.active{color:var(--brand);border-bottom-color:var(--gold)}
-  .demo-flag{margin-left:12px;background:#fff4e5;color:#9a5b13;border:1px solid #f0d2a8;padding:4px 10px;border-radius:6px;font-size:12px;align-self:center}
+  .demo-flag{margin-left:auto;margin-right:auto;background:#fff4e5;color:#9a5b13;border:1px solid #f0d2a8;padding:4px 10px;border-radius:6px;font-size:12px;align-self:center}
   /* Kanban */
   .board{display:flex;gap:14px;padding:18px 20px;overflow-x:auto;align-items:flex-start}
   .col{background:#e9eff0;border:1px solid var(--line);border-radius:10px;min-width:248px;max-width:248px;display:flex;flex-direction:column}
@@ -148,7 +148,7 @@
   button.primary:hover{filter:brightness(1.08)}
   button.secondary{background:#fff;color:var(--brand);border:1px solid #c5d3d6;padding:10px 14px;border-radius:8px;font-weight:600;cursor:pointer;font-size:13.5px}
   button.secondary:hover{background:#eef4f5}
-  .newbtn{margin-left:auto;background:var(--action);color:#fff;border:0;padding:9px 14px;border-radius:8px;font-weight:600;cursor:pointer;font-size:13px;align-self:center}
+  .newbtn{background:var(--action);color:#fff;border:0;padding:9px 14px;border-radius:8px;font-weight:600;cursor:pointer;font-size:13px;align-self:center}
   .newbtn:hover{filter:brightness(1.08)}
   .analyze-btn{margin-left:auto;background:var(--action);color:#fff;border:0;padding:6px 11px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
   .analyze-btn:hover{filter:brightness(1.08)}
@@ -199,8 +199,8 @@
 <div class="toolbar">
   <div class="tab active" id="tab-board" onclick="setView('board')">Pregled predmeta</div>
   <div class="tab" id="tab-report" onclick="setView('report')">Izvještaji</div>
-  <button class="newbtn" onclick="openNewCase()">+ Novi predmet</button>
   <span class="demo-flag">DEMO — faze i podaci su primjer, prilagođava se vašem procesu</span>
+  <button class="newbtn" onclick="openNewCase()">+ Novi predmet</button>
 </div>
 
 <div id="view"></div>
