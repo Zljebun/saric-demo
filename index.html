@@ -233,7 +233,7 @@ const WORKERS = {
 // Podrazumijevani radnik po fazi (ko preuzima kad predmet uđe u fazu)
 const PHASE_WORKER = ["MM","ET","LS","DM","MT","NM"];
 const LOGGED = "Nela Marinković"; // trenutno prijavljeni korisnik (za audit)
-const PHASE_COLORS=["#1f6f86","#2487a0","#2f9fae","#3aa79f","#cf9b3c","#1f9d55"];
+const PHASE_COLORS=["#2f6fb1","#2aa0a0","#7a5bc2","#c79a3b","#d9733b","#1f9d55"];
 const VISA_COLORS=["#15748a","#c2632f","#6a4fb1","#1f9d6b","#c79a3b","#2f6fb1","#b1442f"];
 function code(name){return Object.keys(WORKERS).find(k=>WORKERS[k].ime===name);}
 function av(c,small){const w=WORKERS[c];const s=small?'width:20px;height:20px;font-size:10px;':'';return `<span class="avatar" style="${s}background:${w.boja}" title="${w.ime} — ${w.uloga}">${c}</span>`;}
@@ -555,12 +555,12 @@ function renderReport(){
 
   const bars=phaseAvg.map((v,i)=>`
     <div class="bar"><span class="blab">${PHASES[i]}</span>
-      <span class="track"><span class="fill ${i===slowIdx?'max':''}" style="width:${maxAvg?Math.max(6,v/maxAvg*100):0}%"></span></span>
+      <span class="track"><span class="fill ${i===slowIdx?'max':''}" style="width:${maxAvg?Math.max(6,v/maxAvg*100):0}%${i===slowIdx?'':`;background:${PHASE_COLORS[i]}`}"></span></span>
       <span class="val">${v} dana</span></div>`).join("");
 
   const loadRows=Object.keys(load).sort((a,b)=>load[b]-load[a]).map(k=>
     `<div class="bar"><span class="blab" style="display:flex;align-items:center;gap:7px">${av(k,true)} ${WORKERS[k].ime}</span>
-      <span class="track"><span class="fill" style="width:${Math.max(8,load[k]/maxLoad*100)}%"></span></span>
+      <span class="track"><span class="fill" style="width:${Math.max(8,load[k]/maxLoad*100)}%;background:${WORKERS[k].boja}"></span></span>
       <span class="val">${load[k]} ${load[k]===1?'predmet':'predmeta'}</span></div>`).join("");
 
   // brzina rada po radniku: prosječno trajanje završenih faza koje je radnik obradio
