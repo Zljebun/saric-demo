@@ -9,6 +9,7 @@
     --brand:#0e4f5c; --brand2:#15748a; --gold:#c79a3b; --action:#157f7f;
     --bg:#f2f6f7; --card:#fff; --line:#e1e8ea; --muted:#65737a;
     --ok:#1f9d55; --warn:#d9822b; --late:#cc2f2f;
+    --surface:#fff; --surface2:#e9eff0; --text:#16242a; --track:#eef2f3;
   }
   *{box-sizing:border-box}
   body{margin:0;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:#16242a}
@@ -107,7 +108,7 @@
   .dh-actions{margin-left:auto;display:flex;align-items:center;gap:13px}
   .mx{cursor:pointer;font-size:17px;opacity:.85;line-height:1;user-select:none}
   .mx:hover{opacity:1}
-  .dhead{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;padding:18px 22px;display:flex;align-items:flex-start;gap:14px}
+  .dhead{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;padding:18px 22px;display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap}
   .dhead .x{margin-left:auto;cursor:pointer;font-size:22px;opacity:.85;line-height:1}
   .dhead h2{margin:0;font-size:20px}
   .dhead .tags{margin-top:7px;display:flex;gap:8px;flex-wrap:wrap;font-size:12.5px}
@@ -179,6 +180,88 @@
   .chev{font-size:10px;color:var(--muted);transition:.15s}
   footer{padding:14px 20px;color:var(--muted);font-size:12px;text-align:center}
   @media(max-width:760px){.dbody{grid-template-columns:1fr}.dcol+.dcol{border-left:0;border-top:1px solid var(--line)}}
+
+  /* ===== KS demo v2 — vizuelne nadogradnje ===== */
+  /* Filter / alatna traka iznad Kanbana */
+  .filterbar{display:flex;align-items:center;gap:9px;padding:12px 20px 0;flex-wrap:wrap}
+  .filterbar .fsearch{flex:0 1 240px;padding:8px 11px;border:1px solid var(--line);border-radius:8px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--text)}
+  .filterbar select{padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--text)}
+  .filterbar .fsearch:focus,.filterbar select:focus{outline:none;border-color:var(--brand2)}
+  .fchk{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);cursor:pointer;user-select:none}
+  .fspacer{flex:1}
+  .viewtoggle{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .vtbtn{background:var(--surface);border:0;padding:8px 13px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer}
+  .vtbtn+.vtbtn{border-left:1px solid var(--line)}
+  .vtbtn.active{background:var(--brand);color:#fff}
+  /* Kanban — kapacitet kolone + dodaci na kartici */
+  .col h2{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .col h2 .ctitle{display:flex;align-items:baseline;gap:5px}
+  .capav{display:flex;align-items:center}
+  .capa{width:21px;height:21px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:9px;font-weight:700;border:2px solid var(--surface2)}
+  .capmore{font-size:10px;color:var(--muted);margin-left:4px;font-weight:700}
+  .pstep{display:flex;gap:5px;margin-top:9px;align-items:center}
+  .pdot{width:7px;height:7px;border-radius:50%;background:#d4dde0;flex:0 0 auto;transition:.15s}
+  .pdot.fill{background:var(--ok)}
+  .pdot.curr{background:var(--warn);box-shadow:0 0 0 3px rgba(217,130,43,.2)}
+  .pcard.tint-warn{background:linear-gradient(100deg,#fffaf1,var(--card) 62%)}
+  .pcard.tint-late{background:linear-gradient(100deg,#fdeeee,var(--card) 58%)}
+  .pcard.tint-done{background:linear-gradient(100deg,#f0faf3,var(--card) 62%)}
+  /* Tabelarni prikaz */
+  .dtable{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--line);border-radius:11px;overflow:hidden;font-size:13.5px}
+  .dtable thead th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.3px;color:var(--muted);padding:11px 14px;background:var(--track);border-bottom:1px solid var(--line)}
+  .dtable td{padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:middle}
+  .dtable tbody tr{cursor:pointer;transition:.1s}
+  .dtable tbody tr:hover{background:var(--track)}
+  .dtable tbody tr:last-child td{border-bottom:0}
+  .dtable .muted{color:var(--muted)}
+  .vdot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px;vertical-align:middle}
+  .tstep{display:inline-flex;gap:3px;margin-right:8px;vertical-align:middle}
+  .tstep .pdot{width:6px;height:6px}
+  .emptyx{padding:34px;text-align:center;color:var(--muted);font-size:14px;background:var(--surface);border:1px dashed var(--line);border-radius:11px}
+  /* Dosije — horizontalni stepper faza */
+  .dstep{flex:0 0 100%;display:flex;align-items:flex-start;margin-top:4px}
+  .dstepi{flex:1;display:flex;flex-direction:column;align-items:center;text-align:center;position:relative;font-size:9.5px;color:rgba(255,255,255,.55);line-height:1.15}
+  .dstepi .dnum{width:23px;height:23px;border-radius:50%;border:2px solid rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;background:rgba(255,255,255,.08);z-index:1}
+  .dstepi::before{content:"";position:absolute;top:11px;left:-50%;width:100%;height:2px;background:rgba(255,255,255,.22)}
+  .dstepi:first-child::before{display:none}
+  .dstepi .dslab{margin-top:6px;max-width:90px}
+  .dstepi.done{color:rgba(255,255,255,.9)}
+  .dstepi.done .dnum{background:var(--gold);border-color:var(--gold);color:#3a2a07}
+  .dstepi.done::before{background:var(--gold)}
+  .dstepi.curr{color:#fff;font-weight:700}
+  .dstepi.curr .dnum{background:#fff;border-color:#fff;color:var(--brand)}
+  .dstepi.curr::before{background:var(--gold)}
+  /* Dugme za temu */
+  .themebtn{background:rgba(255,255,255,.14);border:0;color:#fff;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center}
+  .themebtn:hover{background:rgba(255,255,255,.24)}
+
+  /* ===== Tamna tema ===== */
+  body[data-theme="dark"]{--bg:#0e1417;--card:#1a2429;--surface:#1a2429;--surface2:#10181b;--line:#2b373d;--muted:#90a0a7;--text:#e3ebed;--track:#202b30;background:var(--bg);color:var(--text)}
+  body[data-theme="dark"] .toolbar{background:#121a1e;border-bottom-color:var(--line)}
+  body[data-theme="dark"] .tab.active{color:#cfe3e7}
+  body[data-theme="dark"] .col{background:#121a1e;border-color:var(--line)}
+  body[data-theme="dark"] .pcard{background:var(--card);border-color:var(--line);box-shadow:0 1px 2px rgba(0,0,0,.3)}
+  body[data-theme="dark"] .pcard:hover{border-color:#3a4a52;box-shadow:0 4px 14px rgba(0,0,0,.45)}
+  body[data-theme="dark"] .pcard.tint-warn{background:linear-gradient(100deg,#27220f,var(--card) 62%)}
+  body[data-theme="dark"] .pcard.tint-late{background:linear-gradient(100deg,#2a1414,var(--card) 58%)}
+  body[data-theme="dark"] .pcard.tint-done{background:linear-gradient(100deg,#0f241a,var(--card) 62%)}
+  body[data-theme="dark"] .pdot{background:#3a474d}
+  body[data-theme="dark"] .panel,body[data-theme="dark"] .stat,body[data-theme="dark"] .kpi,body[data-theme="dark"] .dtable,body[data-theme="dark"] .emptyx{background:var(--card);border-color:var(--line)}
+  body[data-theme="dark"] .dtable thead th,body[data-theme="dark"] .dtable tbody tr:hover{background:var(--track)}
+  body[data-theme="dark"] .kpi .ic{background:#222e34}
+  body[data-theme="dark"] .kpi.bottleneck{background:linear-gradient(135deg,#1a2429,#241d10);border-color:#4a3a18}
+  body[data-theme="dark"] .bar .track{background:var(--track)}
+  body[data-theme="dark"] .bar .blab{color:#c2ced3}
+  body[data-theme="dark"] .dossier{background:var(--card)}
+  body[data-theme="dark"] .actions{background:#141d21;border-top-color:var(--line)}
+  body[data-theme="dark"] .cbubble{background:#141d21;border-color:var(--line)}
+  body[data-theme="dark"] .ctext,body[data-theme="dark"] .chead b,body[data-theme="dark"] .kv .v,body[data-theme="dark"] .atl .ad,body[data-theme="dark"] .atl .al,body[data-theme="dark"] .tl .t{color:var(--text)}
+  body[data-theme="dark"] .doc{border-color:var(--line)}
+  body[data-theme="dark"] .docbtn{background:#141d21;border-color:#3a4a52;color:#bfe0e6}
+  body[data-theme="dark"] .frow input,body[data-theme="dark"] .frow select,body[data-theme="dark"] .addcom input,body[data-theme="dark"] .filterbar .fsearch,body[data-theme="dark"] .filterbar select,body[data-theme="dark"] .vtbtn{background:#141d21;border-color:var(--line);color:var(--text)}
+  body[data-theme="dark"] .vtbtn.active{background:var(--brand);color:#fff}
+  body[data-theme="dark"] button.secondary{background:#141d21;color:#bfe0e6;border-color:#3a4a52}
+  body[data-theme="dark"] .latebox{background:#1c1414 !important;border-color:#3a2a2a}
 </style>
 </head>
 <body>
@@ -190,6 +273,7 @@
     <div class="tag">Do vize bez stresa</div>
   </div>
   <div class="spacer"></div>
+  <button class="themebtn" id="themeBtn" onclick="toggleTheme()" title="Svijetla / tamna tema">🌙</button>
   <div class="user">
     <span class="avatar" style="background:#b1442f">NM</span>
     <span>Nela Marinković — direktorica</span>
@@ -235,6 +319,10 @@ const PHASE_WORKER = ["MM","ET","LS","DM","MT","NM"];
 const LOGGED = "Nela Marinković"; // trenutno prijavljeni korisnik (za audit)
 const PHASE_COLORS=["#2f6fb1","#2aa0a0","#7a5bc2","#c79a3b","#d9733b","#1f9d55"];
 const VISA_COLORS=["#15748a","#c2632f","#6a4fb1","#1f9d6b","#c79a3b","#2f6fb1","#b1442f"];
+// Stabilna boja po tipu vize (ista svuda: rub kartice, tabela, donut)
+const VISA_ORDER=["Radna viza","Spajanje porodice","Studentska viza","Priznavanje kvalifikacija","Produženje vize","Studije u Sloveniji","Državljanstvo"];
+const VISA_COLOR_MAP={}; VISA_ORDER.forEach((v,i)=>VISA_COLOR_MAP[v]=VISA_COLORS[i%VISA_COLORS.length]);
+function visaColor(v){return VISA_COLOR_MAP[v]||"#8a93a0";}
 function code(name){return Object.keys(WORKERS).find(k=>WORKERS[k].ime===name);}
 function av(c,small){const w=WORKERS[c];const s=small?'width:20px;height:20px;font-size:10px;':'';return `<span class="avatar" style="${s}background:${w.boja}" title="${w.ime} — ${w.uloga}">${c}</span>`;}
 
@@ -410,26 +498,107 @@ function setView(v){
 }
 
 // ---- Kanban ----------------------------------------------------------------
+let boardView="kanban";
+let flt={q:"",visa:"",worker:"",late:false};
+
+function filteredCases(){
+  const q=flt.q.trim().toLowerCase();
+  return CASES.filter(c=>{
+    if(flt.late && !(c.days>=5 && !c.done)) return false;
+    if(flt.visa && c.visa!==flt.visa) return false;
+    if(flt.worker && c.worker!==flt.worker) return false;
+    if(q && !(c.ime.toLowerCase().includes(q) || c.id.toLowerCase().includes(q))) return false;
+    return true;
+  });
+}
+function onFilter(){
+  flt.q=document.getElementById("flt_q").value;
+  flt.visa=document.getElementById("flt_visa").value;
+  flt.worker=document.getElementById("flt_worker").value;
+  flt.late=document.getElementById("flt_late").checked;
+  renderBoardContent();
+}
+function setBoardView(v){
+  boardView=v;
+  document.getElementById("vt_kanban").classList.toggle("active",v==="kanban");
+  document.getElementById("vt_table").classList.toggle("active",v==="table");
+  renderBoardContent();
+}
+// Tačkice napretka kroz faze (zelene=gotovo, narandžasta=trenutna)
+function stepDots(c){
+  return PHASES.map((_,i)=>{
+    const cls=(c.done||i<c.phase)?"fill":((i===c.phase&&!c.done)?"curr":"");
+    return `<span class="pdot ${cls}"></span>`;
+  }).join("");
+}
 function renderBoard(){
   const el=document.getElementById("view");
+  const visaOpts=VISA_ORDER.map(v=>`<option value="${v}"${flt.visa===v?' selected':''}>${v}</option>`).join("");
+  const workerOpts=Object.keys(WORKERS).map(w=>`<option value="${w}"${flt.worker===w?' selected':''}>${WORKERS[w].ime}</option>`).join("");
+  el.innerHTML=`
+    <div class="filterbar">
+      <input id="flt_q" class="fsearch" placeholder="🔍 Pretraga (ime ili ID)…" value="${flt.q.replace(/"/g,'&quot;')}" oninput="onFilter()">
+      <select id="flt_visa" onchange="onFilter()"><option value="">Svi tipovi vize</option>${visaOpts}</select>
+      <select id="flt_worker" onchange="onFilter()"><option value="">Svi radnici</option>${workerOpts}</select>
+      <label class="fchk"><input type="checkbox" id="flt_late" onchange="onFilter()"${flt.late?' checked':''}> samo koji kasne</label>
+      <span class="fspacer"></span>
+      <div class="viewtoggle">
+        <button id="vt_kanban" class="vtbtn ${boardView==='kanban'?'active':''}" onclick="setBoardView('kanban')">▦ Kanban</button>
+        <button id="vt_table" class="vtbtn ${boardView==='table'?'active':''}" onclick="setBoardView('table')">▤ Tabela</button>
+      </div>
+    </div>
+    <div id="boardContent"></div>`;
+  renderBoardContent();
+}
+function renderBoardContent(){
+  const cont=document.getElementById("boardContent");
+  const list=filteredCases();
+  if(boardView==="table"){ cont.innerHTML=tableHTML(list); return; }
   const board=document.createElement("div"); board.className="board";
   PHASES.forEach((ph,i)=>{
-    const inCol=CASES.filter(c=>c.phase===i);
+    const inCol=list.filter(c=>c.phase===i);
+    const ws=[...new Set(inCol.map(c=>c.worker))];
+    const cap=ws.slice(0,4).map((w,k)=>`<span class="capa" style="background:${WORKERS[w].boja};margin-left:${k?-7:0}px" title="${WORKERS[w].ime}">${w}</span>`).join("")
+      +(ws.length>4?`<span class="capmore">+${ws.length-4}</span>`:"");
     const col=document.createElement("div"); col.className="col";
-    col.innerHTML=`<h2>${ph} <span class="count">(${inCol.length})</span></h2><div class="cards"></div>`;
+    col.innerHTML=`<h2><span class="ctitle">${ph} <span class="count">(${inCol.length})</span></span><span class="capav">${cap}</span></h2><div class="cards"></div>`;
     const cards=col.querySelector(".cards");
     inCol.forEach(c=>{
       const late=c.days>=5 && !c.done;
       const daysPill=c.done?`<span class="pill done">završeno</span>`
         :`<span class="pill ${late?'late':'days'}">${c.days} ${c.days===1?'dan':'dana'} u fazi</span>`;
-      const card=document.createElement("div"); card.className="pcard"; card.onclick=()=>{dossierBack=null;openDossier(c.id);};
+      const tint=c.done?'tint-done':(c.days>=5?'tint-late':(c.days>=3?'tint-warn':''));
+      const card=document.createElement("div");
+      card.className="pcard"+(tint?" "+tint:"");
+      card.style.borderLeft=`4px solid ${visaColor(c.visa)}`;
+      card.onclick=()=>{dossierBack=null;openDossier(c.id);};
       card.innerHTML=`<div class="nm">${c.ime}</div><div class="visa">${c.visa} · ${c.id}</div>
+        <div class="pstep">${stepDots(c)}</div>
         <div class="meta">${daysPill}<span class="who">${av(c.worker,true)}</span></div>`;
       cards.appendChild(card);
     });
     board.appendChild(col);
   });
-  el.replaceChildren(board);
+  cont.replaceChildren(board);
+}
+function tableHTML(list){
+  if(!list.length) return `<div style="padding:18px 20px"><div class="emptyx">Nema predmeta za zadati filter.</div></div>`;
+  const sorted=list.slice().sort((a,b)=>a.phase-b.phase || b.days-a.days);
+  const rows=sorted.map(c=>{
+    const late=c.days>=5 && !c.done;
+    const badge=c.done?`<span class="pill done">završeno</span>`:`<span class="pill ${late?'late':'days'}">${c.days} ${c.days===1?'dan':'dana'}</span>`;
+    return `<tr onclick="dossierBack=null;openDossier('${c.id}')">
+      <td><span class="vdot" style="background:${visaColor(c.visa)}"></span><b>${c.ime}</b></td>
+      <td class="muted">${c.id}</td>
+      <td>${c.visa}</td>
+      <td><span class="tstep">${stepDots(c)}</span>${PHASES[c.phase]}</td>
+      <td>${badge}</td>
+      <td><span style="display:inline-flex;align-items:center;gap:6px">${av(c.worker,true)}<span class="muted">${WORKERS[c.worker].ime}</span></span></td>
+    </tr>`;
+  }).join("");
+  return `<div style="padding:18px 20px"><table class="dtable">
+    <thead><tr><th>Klijent</th><th>ID</th><th>Tip vize</th><th>Faza</th><th>Status</th><th>Zadužen/a</th></tr></thead>
+    <tbody>${rows}</tbody></table></div>`;
 }
 
 // ---- Izvještaji ------------------------------------------------------------
@@ -534,7 +703,7 @@ function renderReport(){
   const phaseCount=PHASES.map((_,i)=>CASES.filter(c=>c.phase===i).length);
   const maxCount=Math.max(1,...phaseCount);
   const visaCounts={}; CASES.forEach(c=>visaCounts[c.visa]=(visaCounts[c.visa]||0)+1);
-  const visaSegs=Object.keys(visaCounts).sort((a,b)=>visaCounts[b]-visaCounts[a]).map((v,i)=>({label:v,value:visaCounts[v],color:VISA_COLORS[i%VISA_COLORS.length]}));
+  const visaSegs=Object.keys(visaCounts).sort((a,b)=>visaCounts[b]-visaCounts[a]).map(v=>({label:v,value:visaCounts[v],color:visaColor(v)}));
 
   const kpis=`<div class="kpis">
     <div class="kpi"><div class="ic blue">📂</div><div class="big">${active.length}</div><div class="lab">Aktivnih predmeta</div></div>
@@ -661,8 +830,13 @@ function openDossier(id){
         <div class="tags"><span class="tag">${c.id}</span><span class="tag">${c.visa}</span>
         <span class="tag">Faza: ${PHASES[c.phase]}</span>
         <span class="tag">Zadužen/a: ${WORKERS[c.worker].ime}</span>
+        <span class="tag">Napredak: ${c.done?PHASES.length:c.phase}/${PHASES.length} faza</span>
         <span class="tag">Otvoren: ${durDays(totalStart, c.done?c.hist[c.hist.length-1][3]:todayStr())} dana</span></div>
       </div><div class="dh-actions"><span class="mx" onclick="toggleMax(this)" title="Uvećaj / smanji">${maxOpen?"⤡":"⤢"}</span><div class="x" onclick="closeOrBack()">×</div></div>
+      <div class="dstep">${PHASES.map((p,i)=>{
+        const st=(c.done||i<c.phase)?'done':((i===c.phase&&!c.done)?'curr':'');
+        return `<div class="dstepi ${st}"><span class="dnum">${(c.done||i<c.phase)?'✓':i+1}</span><span class="dslab">${p}</span></div>`;
+      }).join("")}</div>
     </div>
     <div class="dbody">
       <div class="dcol">
@@ -800,6 +974,19 @@ function durDays(a,b){return Math.max(0,Math.round((parse(b)-parse(a))/864e5));}
 function todayStr(){const d=new Date();return String(d.getDate()).padStart(2,"0")+"."+String(d.getMonth()+1).padStart(2,"0")+"."+d.getFullYear();}
 function nowStr(){const d=new Date();return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");}
 function stamp(){return todayStr()+" "+nowStr();} // datum + tačno vrijeme za žive akcije
+
+// ---- Tema (svijetla / tamna) ----------------------------------------------
+function toggleTheme(){
+  const dark=document.body.getAttribute("data-theme")==="dark";
+  document.body.setAttribute("data-theme",dark?"light":"dark");
+  document.getElementById("themeBtn").textContent=dark?"🌙":"☀️";
+  try{localStorage.setItem("ks_theme",dark?"light":"dark");}catch(e){}
+}
+(function initTheme(){
+  let t="light"; try{t=localStorage.getItem("ks_theme")||"light";}catch(e){}
+  document.body.setAttribute("data-theme",t);
+  const b=document.getElementById("themeBtn"); if(b) b.textContent=t==="dark"?"☀️":"🌙";
+})();
 
 renderBoard();
 </script>
