@@ -193,6 +193,15 @@
   .vtbtn{background:var(--surface);border:0;padding:8px 13px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer}
   .vtbtn+.vtbtn{border-left:1px solid var(--line)}
   .vtbtn.active{background:var(--brand);color:#fff}
+  /* Legenda boja (popover) */
+  .legendwrap{position:relative}
+  .legendbtn{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer}
+  .legendbtn:hover{color:var(--brand);border-color:var(--brand2)}
+  .legendpop{display:none;position:absolute;right:0;top:calc(100% + 7px);z-index:30;background:var(--surface);border:1px solid var(--line);border-radius:11px;box-shadow:0 10px 30px rgba(10,30,40,.18);padding:12px 14px;min-width:240px}
+  .legendpop.open{display:block}
+  .legendpop .lphdr{font-size:11.5px;text-transform:uppercase;letter-spacing:.3px;color:var(--muted);margin-bottom:9px;font-weight:700}
+  .legendpop .lrow{display:flex;align-items:center;gap:10px;padding:4px 0;font-size:14px}
+  .legendpop .lsw{width:5px;height:18px;border-radius:3px;flex:0 0 auto}
   /* Kanban — kapacitet kolone + dodaci na kartici */
   .col h2{display:flex;align-items:center;justify-content:space-between;gap:8px}
   .col h2 .ctitle{display:flex;align-items:baseline;gap:5px}
@@ -546,6 +555,13 @@ function renderBoard(){
       <select id="flt_worker" onchange="onFilter()"><option value="">Svi radnici</option>${workerOpts}</select>
       <label class="fchk"><input type="checkbox" id="flt_late" onchange="onFilter()"${flt.late?' checked':''}> samo koji kasne</label>
       <span class="fspacer"></span>
+      <div class="legendwrap">
+        <button class="legendbtn" id="legendBtn" onclick="toggleLegend(event)" title="Objašnjenje boja ruba">🎨 Legenda</button>
+        <div class="legendpop" id="legendPop">
+          <div class="lphdr">Boja lijevog ruba = tip vize</div>
+          ${VISA_ORDER.map(v=>`<div class="lrow"><span class="lsw" style="background:${visaColor(v)}"></span>${v}</div>`).join("")}
+        </div>
+      </div>
       <div class="viewtoggle">
         <button id="vt_kanban" class="vtbtn ${boardView==='kanban'?'active':''}" onclick="setBoardView('kanban')">▦ Po fazama</button>
         <button id="vt_table" class="vtbtn ${boardView==='table'?'active':''}" onclick="setBoardView('table')">▤ Tabela</button>
@@ -986,6 +1002,18 @@ function toggleTheme(){
   document.getElementById("themeBtn").textContent=dark?"🌙":"☀️";
   try{localStorage.setItem("ks_theme",dark?"light":"dark");}catch(e){}
 }
+// ---- Legenda boja ----------------------------------------------------------
+function toggleLegend(e){
+  if(e) e.stopPropagation();
+  const p=document.getElementById("legendPop");
+  if(p) p.classList.toggle("open");
+}
+// zatvori legendu klikom bilo gdje van nje
+document.addEventListener("click",function(e){
+  const p=document.getElementById("legendPop");
+  if(p && p.classList.contains("open") && !e.target.closest(".legendwrap")) p.classList.remove("open");
+});
+
 (function initTheme(){
   let t="light"; try{t=localStorage.getItem("ks_theme")||"light";}catch(e){}
   document.body.setAttribute("data-theme",t);
