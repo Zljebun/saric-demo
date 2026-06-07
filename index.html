@@ -547,7 +547,7 @@ function renderBoard(){
       <label class="fchk"><input type="checkbox" id="flt_late" onchange="onFilter()"${flt.late?' checked':''}> samo koji kasne</label>
       <span class="fspacer"></span>
       <div class="viewtoggle">
-        <button id="vt_kanban" class="vtbtn ${boardView==='kanban'?'active':''}" onclick="setBoardView('kanban')">▦ Kanban</button>
+        <button id="vt_kanban" class="vtbtn ${boardView==='kanban'?'active':''}" onclick="setBoardView('kanban')">▦ Po fazama</button>
         <button id="vt_table" class="vtbtn ${boardView==='table'?'active':''}" onclick="setBoardView('table')">▤ Tabela</button>
       </div>
     </div>
